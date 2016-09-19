@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://yoursite.com/"/>
-  <updated>2016-09-12T09:09:10.000Z</updated>
+  <updated>2016-09-19T10:38:33.000Z</updated>
   <id>http://yoursite.com/</id>
   
   <author>
@@ -14,6 +14,22 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>适配Xcode8和iOS10</title>
+    <link href="http://yoursite.com/2016/09/19/%E9%80%82%E9%85%8DXcode8%E5%92%8CiOS10/"/>
+    <id>http://yoursite.com/2016/09/19/适配Xcode8和iOS10/</id>
+    <published>2016-09-19T10:33:58.000Z</published>
+    <updated>2016-09-19T10:38:33.000Z</updated>
+    
+    <summary type="html">
+    
+    </summary>
+    
+    
+      <category term="iOS" scheme="http://yoursite.com/tags/iOS/"/>
+    
+  </entry>
   
   <entry>
     <title>[亲自整理]Mac上搭建基于GitHub Page的Hexo博客</title>
