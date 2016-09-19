@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://yoursite.com/"/>
-  <updated>2016-09-12T09:09:10.000Z</updated>
+  <updated>2016-09-19T10:28:39.000Z</updated>
   <id>http://yoursite.com/</id>
   
   <author>
@@ -14,6 +14,20 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>test</title>
+    <link href="http://yoursite.com/2016/09/19/test/"/>
+    <id>http://yoursite.com/2016/09/19/test/</id>
+    <published>2016-09-19T10:28:39.000Z</published>
+    <updated>2016-09-19T10:28:39.000Z</updated>
+    
+    <summary type="html">
+    
+    </summary>
+    
+    
+  </entry>
   
   <entry>
     <title>[亲自整理]Mac上搭建基于GitHub Page的Hexo博客</title>
