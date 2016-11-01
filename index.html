@@ -106,8 +106,8 @@
     fancybox: true,
     motion: true,
     duoshuo: {
-      userId: 0,
-      author: '博主'
+      userId: 6347889523870926000,
+      author: '博主大人一土'
     }
   };
 </script>
@@ -263,6 +263,13 @@
 
           
             
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/10/27/为媳妇儿写VBA/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/10/27/为媳妇儿写VBA/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
           
 
           
@@ -283,19 +290,17 @@
 
       
         
-          
-            <h2 id="写在前面"><a href="#写在前面" class="headerlink" title="写在前面"></a>写在前面</h2><p>我家媳妇儿（以下简称领导）是做金融行业数据分析相关工作，每天都需要跟海量的Excel数据打交道。昨天，非得让我给写一个VBA程序，实现一个可以自动处理数据的Case.语气强硬：你不是“扛把子”吗，“扛把子”程序员不是什么都会写吗？呃。。。话说“扛把子”程序员这个称号如何而来。。。我竟无言以对。没办法，硬着头皮撸vba吧，不能失掉自己在领导心目中伟岸的形象~~</p>
+          <h2 id="写在前面"><a href="#写在前面" class="headerlink" title="写在前面"></a>写在前面</h2><p>我家媳妇儿（以下简称领导）是做金融行业数据分析相关工作，每天都需要跟海量的Excel数据打交道。昨天，非得让我给写一个VBA程序，实现一个可以自动处理数据的Case.语气强硬：你不是“扛把子”吗，“扛把子”程序员不是什么都会写吗？呃。。。话说“扛把子”程序员这个称号如何而来。。。我竟无言以对。没办法，硬着头皮撸vba吧，不能失掉自己在领导心目中伟岸的形象~~</p>
 <h2 id="甩起膀子-干活吧"><a href="#甩起膀子-干活吧" class="headerlink" title="甩起膀子 干活吧"></a>甩起膀子 干活吧</h2><p>在kindle上搜索到一本《别怕，ExcelVBA其实很简单》，看评价挺高，下单，购买。并没有急于去看书，根据领导的业务要求，理了一下思路。需要把400多个Excel工作簿里某个工作表的所有品类的每个品类的GMV算出来，并把算出的结果–放到一个新的Excel文件中，方便领导对结果进行处理分析。</p>
 <p>业务逻辑理顺了，那就一步一步堆代码吧。文件夹遍历，工作簿操作，工作表操作，数据类型，控制语句重点是循环，单元格操作。重点就这些。领导要的比较急，我也就非常之时用非常之法了。</p>
 <p>还好，不辱使命，凌晨1点终于搞定。</p>
 <p>交付领导测试，完美运行。</p>
-<p>PS:今天领导说，非常好用，大大提高了工作效率。O(∩_∩)O哈哈~</p>
-<h2 id="代码记录"><a href="#代码记录" class="headerlink" title="代码记录"></a>代码记录</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div></pre></td><td class="code"><pre><div class="line">Sub AutoCalculate()</div><div class="line">Dim path As String</div><div class="line">Dim FileName As String</div><div class="line">Dim LastCell As Range</div><div class="line">Dim Wkb As Workbook</div><div class="line">Dim WS As Worksheet</div><div class="line">Dim ThisWB As String</div><div class="line"></div><div class="line">Dim MyDir As String</div><div class="line">MyDir = ThisWorkbook.path &amp; &quot;\&quot;</div><div class="line"></div><div class="line">Dim thisWCRowsCount As Integer</div><div class="line">thisWCRowsCount = 0</div><div class="line"></div><div class="line">ThisWB = ThisWorkbook.Name</div><div class="line">Application.EnableEvents = False</div><div class="line">Application.ScreenUpdating = False</div><div class="line">path = MyDir</div><div class="line">FileName = Dir(path &amp; &quot;\*.xlsx&quot;, vbNormal)</div><div class="line"></div><div class="line">Do Until FileName = &quot;&quot;</div><div class="line"></div><div class="line">If FileName &lt;&gt; ThisWB Then</div><div class="line">Set Wkb = Workbooks.Open(FileName:=path &amp; &quot;\&quot; &amp; FileName)</div><div class="line">For Each WS In Wkb.Worksheets</div><div class="line">Set LastCell = WS.Cells.SpecialCells(xlCellTypeLastCell)</div><div class="line"></div><div class="line">If LastCell.Value = &quot;&quot; And LastCell.Address = Range(&quot;$A$1&quot;).Address Then</div><div class="line"></div><div class="line">Else</div><div class="line"></div><div class="line">If WS.Name = &quot;品牌热门排行&quot; Then</div><div class="line"></div><div class="line">&apos;遍历每一行</div><div class="line">Dim i, j</div><div class="line">Dim sum</div><div class="line"></div><div class="line">nowRow = 1</div><div class="line">sum = WS.Cells(1, 6).Value</div><div class="line">i = 1</div><div class="line">j = WS.UsedRange.Rows.Count</div><div class="line"></div><div class="line">For i = 1 To j - 1</div><div class="line"></div><div class="line">     If WS.Cells(i + 1, 3).Value = WS.Cells(i, 3).Value Then</div><div class="line"></div><div class="line">        sum = sum + WS.Cells(i + 1, 6).Value</div><div class="line"></div><div class="line">     Else</div><div class="line"></div><div class="line">        thisWCRowsCount = thisWCRowsCount + 1</div><div class="line">        ThisWorkbook.Sheets(1).Cells(thisWCRowsCount, 3).Value = sum</div><div class="line">        ThisWorkbook.Sheets(1).Cells(thisWCRowsCount, 2).Value = WS.Cells(i, 3).Value</div><div class="line">        ThisWorkbook.Sheets(1).Cells(thisWCRowsCount, 1).Value = WS.Cells(i, 1).Value</div><div class="line">        sum = WS.Cells(i + 1, 6).Value</div><div class="line">     End If</div><div class="line"></div><div class="line">        If i + 1 = j Then</div><div class="line">        thisWCRowsCount = thisWCRowsCount + 1</div><div class="line">        ThisWorkbook.Sheets(1).Cells(thisWCRowsCount, 3).Value = sum</div><div class="line">        ThisWorkbook.Sheets(1).Cells(thisWCRowsCount, 2).Value = WS.Cells(i + 1, 3).Value</div><div class="line">        ThisWorkbook.Sheets(1).Cells(thisWCRowsCount, 1).Value = WS.Cells(i + 1, 1).Value</div><div class="line">        End If</div><div class="line">Next</div><div class="line">&apos;以上为遍历每一行代码</div><div class="line">End If</div><div class="line"></div><div class="line">End If</div><div class="line">Next WS</div><div class="line"></div><div class="line">Wkb.Close False</div><div class="line">End If</div><div class="line"></div><div class="line">FileName = Dir()</div><div class="line">Loop</div><div class="line"></div><div class="line">Application.EnableEvents = True</div><div class="line">Application.ScreenUpdating = True</div><div class="line"></div><div class="line">Set Wkb = Nothing</div><div class="line">Set LastCell = Nothing</div><div class="line">End Sub</div></pre></td></tr></table></figure>
-<h2 id="新技能Get"><a href="#新技能Get" class="headerlink" title="新技能Get"></a>新技能Get</h2><p>接触一门新语言，一晚上写出一个VBA小程序，解决一个特定Case。收获更多的是对学习思路和方法的反思。任何一门编程语言，纸上谈兵，纯理论的学习，见效非常慢，也是不科学的。唯有放到实际生产中，在实践中学习，方能提高学习效率。任何的学习，都理应如此。</p>
-<h2 id="写在文后"><a href="#写在文后" class="headerlink" title="写在文后"></a>写在文后</h2><p>此文仅仅是自写自看，也算是开一个深入学习VBA的口子吧。以后肯定还会结合领导的需求写出其他的小程序，代码也会存放在这里。另外在VBA程序优化和抽象上会作进一步处理，目标是能为领导的日常工作建立一套模型，实现尽可能的办公自动化。最浪漫的事莫过于此吧~~   O(∩_∩)O</p>
-<p>以上。</p>
-
-          
+<p>PS:今天领导说，非常好用，大大提高了工作效率。O(∩_∩)O哈哈~<br>
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2016/10/27/为媳妇儿写VBA/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
         
       
     </div>
@@ -366,6 +371,13 @@
 
           
             
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/10/18/swift-Optional-延伸开来/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/10/18/swift-Optional-延伸开来/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
           
 
           
@@ -386,81 +398,13 @@
 
       
         
-          
-            <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>最近有朋友咨询过多次关于swift中? ! ?? as? as! Any AnyObject这些符号到底表示什么意思，如何使用。对于初学者，在看swift代码时，对满屏的这些符号，表示很晕。借此机会，我把自己对此的理解记录于此。</p>
-<p>话说一切要先以可选类型Optional说起~~</p>
-<h2 id="一-可选类型Optional"><a href="#一-可选类型Optional" class="headerlink" title="一.可选类型Optional"></a>一.可选类型Optional</h2><h3 id="1-1Optional初识"><a href="#1-1Optional初识" class="headerlink" title="1.1Optional初识"></a>1.1Optional初识</h3><p>C 和 Objective-C 中并沒有 optional这个概念。可选类型类似于Objective-C中指针的nil值，但是nil只对类(class)有用，指对象不存在，对于结构体，基本的 C 数据类型或者枚举类型不起作用。对于这些类型，Objective-C 方法一般返回一个特殊值（比如NSNotFound）来表示值不存在。但是，Swift 的 optional 可以表示任意类型的值不存在。任何类型的可选类型都能赋值为 nil，而不仅限于对象类型。</p>
-<p>举个例子<br>Swift 的String 有一個叫做toInt的方法，作用是将一個String值转换成一个Int值。然而，并不是所有的字符串都可以转换成一个整數。字符串”123”可以被转换成数字123，但是字符串”hello, world”不行。</p>
-<p>如下代码</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">let possibleNumber = &quot;123&quot;</div><div class="line">let convertedNumber = possibleNumber.toInt()</div><div class="line">// convertedNumber 类型是 &quot;Int?&quot;， 也就是 &quot;optional Int&quot;</div></pre></td></tr></table></figure>
-<p>一個 optional Int写成Int?而不是Int。问号暗示包含的值是 optional 类型，也就是说可能是一个Int值也可能不包含值，也就是nil。</p>
-<p>对于一个不确定有没有值的变量我们可以定义成Optional.定义一个可选类型有两种方法。</p>
-<ul>
-<li><p>第一种方式<br>var str: Optional<string> = nil</string></p>
-</li>
-<li><p>第二种方式<br>var str:String? = nil (推荐此种写法)</p>
-</li>
-</ul>
-<h2 id="那么，到此-在类型后面，可以表示定义一个可选类型变量或者常亮"><a href="#那么，到此-在类型后面，可以表示定义一个可选类型变量或者常亮" class="headerlink" title="那么，到此,?在类型后面，可以表示定义一个可选类型变量或者常亮"></a><code>那么，到此,?在类型后面，可以表示定义一个可选类型变量或者常亮</code></h2><h3 id="1-2Optional的使用"><a href="#1-2Optional的使用" class="headerlink" title="1.2Optional的使用"></a>1.2Optional的使用</h3><h4 id="1-2-1强制解包"><a href="#1-2-1强制解包" class="headerlink" title="1.2.1强制解包"></a>1.2.1强制解包</h4><p>上面讲到了如何定义可选类型，那么现在有一个可选类型的变量，如何使用这个变量呢？这里要引出一个解包的概念。</p>
-<p>假设现在有一个变量</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">var str:String? = &quot;hello&quot;</div></pre></td></tr></table></figure>
-<p>如果我们使用str,是不能直接使用str的。一定要进行解包操作。<br>如何解包呢？只需要在变量或者常量后面加上”!”即可。</p>
-<p>如下两行代码的输出结果：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">print(str)//输出：打印出来的结果是Optional&lt;&quot;hello&quot;&gt; : 表示的意思是:str是一个可选类型,并且可选类型中存储的是一个hello的字符串</div><div class="line">print(str!)//输出：“hello”</div></pre></td></tr></table></figure>
-<h2 id="那么，到此-在变量-常亮后面，表示对Optional做强制解包操作。"><a href="#那么，到此-在变量-常亮后面，表示对Optional做强制解包操作。" class="headerlink" title="那么，到此,!在变量/常亮后面，表示对Optional做强制解包操作。"></a><code>那么，到此,!在变量/常亮后面，表示对Optional做强制解包操作。</code></h2><h4 id="1-2-2还有一种解包方式optional-binding"><a href="#1-2-2还有一种解包方式optional-binding" class="headerlink" title="1.2.2还有一种解包方式optional binding"></a>1.2.2还有一种解包方式optional binding</h4><p>在使用可选类型取值时, 通过感叹号!来取值,这个操作我们常常称之为”强制解包”<br>强制解包的意义是告诉Xcode该变量或者常量是一定有值的, 如果强制解包一个没有值的可选类型,程序会直接crash, 所以说强制解包是一个非常危险的操作.</p>
-<p>使用if let进行可选绑定（optional binding）</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">var str:String? </div><div class="line">str = &quot;hello&quot;</div><div class="line">if let temp = str &#123;</div><div class="line">    print(temp)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>判断可选类型str是否有值, 如果有值,则就会执行{}中的代码。<br>换句话说: 如果可选类型有值则系统内部就会对可选类型进行解包,并且将值赋值给temp<br>之后就能通过temp进行访问可选类型</p>
-<h2 id="二-类型检查和类型转换-is-as-as-as！"><a href="#二-类型检查和类型转换-is-as-as-as！" class="headerlink" title="二.类型检查和类型转换 is as as? as！"></a>二.类型检查和类型转换 is as as? as！</h2><p>在Swift中，通常使用is和as操作符来实现类型检查和转换。下面通过样例来演示使用方法，首先定义几个类。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">class MediaItem &#123;</div><div class="line">    var name: String</div><div class="line">    init(name: String) &#123;</div><div class="line">        self.name = name</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">class Movie: MediaItem &#123;</div><div class="line">    var director: String</div><div class="line">    init(name: String, director: String) &#123;</div><div class="line">        self.director = director</div><div class="line">        super.init(name: name)</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">class Movie: MediaItem &#123;</div><div class="line">    var director: String</div><div class="line">    init(name: String, director: String) &#123;</div><div class="line">        self.director = director</div><div class="line">        super.init(name: name)</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">let library = [</div><div class="line">    Movie(name: &quot;Casablanca&quot;, director: &quot;Michael Curtiz&quot;),</div><div class="line">    Song(name: &quot;Blue Suede Shoes&quot;, artist: &quot;Elvis Presley&quot;),</div><div class="line">    Movie(name: &quot;Citizen Kane&quot;, director: &quot;Orson Welles&quot;),</div><div class="line">    Song(name: &quot;The One And Only&quot;, artist: &quot;Chesney Hawkes&quot;),</div><div class="line">    Song(name: &quot;Never Gonna Give You Up&quot;, artist: &quot;Rick Astley&quot;)</div><div class="line">]</div></pre></td></tr></table></figure>
-<h3 id="2-1-使用-is-做类型检查"><a href="#2-1-使用-is-做类型检查" class="headerlink" title="2.1 使用 is 做类型检查"></a>2.1 使用 is 做类型检查</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">var movieCount = 0</div><div class="line">var songCount = 0</div><div class="line"></div><div class="line">for item in library &#123;</div><div class="line">    if item is Movie &#123;</div><div class="line">        ++movieCount</div><div class="line">    &#125; else if item is Song &#123;</div><div class="line">        ++songCount</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">println(&quot;Media library contains \(movieCount) movies and \(songCount) songs&quot;)</div><div class="line">// prints &quot;Media library contains 2 movies and 3 songs&quot;</div></pre></td></tr></table></figure>
-<p>示例迭代了数组library 中的所有元素。循环结束后，movieCount 和 songCount的值就是被找到属于各自的类型的实例数量。</p>
-<h3 id="2-2-使用-as-做类型转换"><a href="#2-2-使用-as-做类型转换" class="headerlink" title="2.2 使用 as 做类型转换"></a>2.2 使用 as 做类型转换</h3><p>看代码说话,承接上部分代码</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">let movie: MediaItem = Movie(name: &quot;Casablanca&quot;, director: &quot;Michael Curtiz&quot;);</div><div class="line">        </div><div class="line">        movie as Movie//&quot;&apos;MediaItem is not convertible to &apos;Movie&apos;;</div><div class="line">				// did you mean to use &apos;as!&apos; to force downcast?&quot;</div><div class="line"></div><div class="line">        movie as MediaItem//可以</div><div class="line"></div><div class="line">        movie as! Movie//可以</div><div class="line">        </div><div class="line">        movie as? Movie//可以</div><div class="line">        </div><div class="line">        movie as? Song//可以，返回nil</div><div class="line">        </div><div class="line">        movie as！Song//不可以，crash</div></pre></td></tr></table></figure>
-<h4 id="那么，到此-可总结出"><a href="#那么，到此-可总结出" class="headerlink" title="那么，到此,可总结出"></a>那么，到此,可总结出</h4><ul>
-<li>is来检查一个实例是否特定子类别</li>
-<li>as 用作向上转型（upcast）</li>
-<li>as? 可选形式的型別检查总是返回一个（optional value），并且如果向下转是不可能的，可选值将是 nil 。这使你能够检查向下转型是否成功。ps:成功的话返回可选类型值（optional），需要我们拆包使用。（见下方代码）</li>
-<li>as! 只有你可以确定向下转型一定会成功时，才使用强制形式。当你视图向下转型为一个不正確的类型时，强制形式的类型检查会引发一个执行时错误。</li>
-</ul>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">for item in library &#123;</div><div class="line">    if let movie = item as? Movie &#123; //optional binding解包！！！！！！！！！！！！</div><div class="line">        println(&quot;Movie: &apos;\(movie.name)&apos;, dir. \(movie.director)&quot;)</div><div class="line">    &#125; else if let song = item as? Song &#123;</div><div class="line">        println(&quot;Song: &apos;\(song.name)&apos;, by \(song.artist)&quot;)</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<h2 id="三-双问号"><a href="#三-双问号" class="headerlink" title="三.双问号 ??"></a>三.双问号 ??</h2><p>对于不期望某个optional值为nil时func返回nil 或者 因为其值为nil而停止了后续业务的情况下，我们可以用”??”在optionalValue为nil时做赋值保险操作（“??”操作后返回值为非optional）</p>
-<p>用法： newValue = optionalValue ?? value<br>若optionalValue非nil时，newValue的值为optionalValue的值，若optionalValue为nil时，newValue的值为value的值</p>
-<h2 id="四-Any-AnyObject"><a href="#四-Any-AnyObject" class="headerlink" title="四.Any AnyObject"></a>四.Any AnyObject</h2><p>简而言之</p>
-<p>AnyObject 可以代表任何 class 类型的实例</p>
-<p>Any 可以表示任意类型，甚至包括方法 (func) 类型</p>
-<p>AnyObject 类似 Objective-C 中的 id ，但其实并不一样。在 Swift 中编译器不仅不会对 AnyObject 实例的方法调用做出检查，甚至对于 AnyObject 的所有方法调用都会返回 Optional 的结果。这虽然是符合 Objective-C 中的理念的，但是在 Swift 环境下使用起来就非常麻烦，也很危险。应该选择的做法是在使用时先确定 AnyObject 真正的类型并进行转换以后再进行调用。</p>
-<p>假设原来的某个 API 返回的是一个 id，那么在 Swift 中现在就将被映射为 AnyObject? (因为 id 是可以指向 nil 的，所以在这里我们需要一个 Optional 的版本)，虽然我们知道调用来说应该是没问题的，但是我们依然最好这样写：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">func someMethod() -&gt; AnyObject? &#123;     </div><div class="line"> // ...    </div><div class="line"> // 返回一个 AnyObject?，等价于在 Objective-C 中返回一个 id     </div><div class="line"> return result </div><div class="line"> &#125; </div><div class="line"> let anyObject: AnyObject? = SomeClass.someMethod()</div><div class="line">  if let someInstance = anyObject as? SomeRealClass &#123;    </div><div class="line">    // ...    </div><div class="line">    // 这里我们拿到了具体 SomeRealClass 的实例     </div><div class="line">    someInstance.funcOfSomeRealClass() </div><div class="line"> &#125;</div></pre></td></tr></table></figure>
-<h2 id="五-关于？-！其实还有另外一种用法"><a href="#五-关于？-！其实还有另外一种用法" class="headerlink" title="五.关于？ ！其实还有另外一种用法"></a>五.关于？ ！其实还有另外一种用法</h2><h3 id="5-1-？可用于可选链（Optional-Chaining）中"><a href="#5-1-？可用于可选链（Optional-Chaining）中" class="headerlink" title="5.1 ？可用于可选链（Optional Chaining）中"></a>5.1 ？可用于可选链（Optional Chaining）中</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line">class Person &#123;</div><div class="line">    var residence: Residence?</div><div class="line">&#125;</div><div class="line"></div><div class="line">class Residence &#123;</div><div class="line">    var numberOfRooms = 1</div><div class="line">&#125;</div><div class="line"></div><div class="line">let john = Person()</div><div class="line"></div><div class="line">if let roomCount = john.residence?.numberOfRooms &#123;</div><div class="line">    println(&quot;John&apos;s residence has \(roomCount) room(s).&quot;)</div><div class="line">&#125; else &#123;</div><div class="line">    println(&quot;Unable to retrieve the number of rooms.&quot;)</div><div class="line">&#125;</div><div class="line">// 列印 &quot;Unable to retrieve the number of rooms.</div></pre></td></tr></table></figure>
-<p>这告诉 Swift 来链接可选residence?属性，如果residence存在则返回回numberOfRooms的值。</p>
-<p>因为这种尝试获取numberOfRooms的操作有可能失失败，可选链会返回Int?类型值。当residence是nil的時候（上例），无法存取numberOfRooms。</p>
-<p>要注意的是，即使numberOfRooms是非可选Int（Int?）只要是通过可选链的请求就意味着numberOfRooms总是回传一个Int?而不是Int。</p>
-<h3 id="5-2-！可用于隐式解包中"><a href="#5-2-！可用于隐式解包中" class="headerlink" title="5.2 ！可用于隐式解包中"></a>5.2 ！可用于隐式解包中</h3><p>相对于普通的 Optional 值，在 Swift 中我们还有一种特殊的 Optional，在对它的成员或者方法进行访问时，编译器会帮助我们自动进行解包，这就是 ImplicitlyUnwrappedOptional。在声明的时候，我们可以通过在类型后加上一个感叹号 (!) 这个语法糖来告诉编译器我们需要一个可以隐式解包的 Optional 值：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">var maybeObject: MyClass!</div></pre></td></tr></table></figure>
-<p>在使用的时候不用次使用的时候 在变量/常量后面加！</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">var maybeObject: MyClass! = MyClass()</div><div class="line">maybeObject.foo()</div></pre></td></tr></table></figure>
-<p>TIP:隐式解包不意味着 “这个变量不会是 nil，你可以放心使用” 这种暗示，只能说 Swift 通过这个特性给了我们一种简便但是危险的使用方式罢了。</p>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><h3 id="1-使用场景"><a href="#1-使用场景" class="headerlink" title="1.?使用场景"></a>1.?使用场景</h3><ul>
-<li>声明Optional变量 </li>
-<li>用在可选链（Optional Chaining）中,用来判断是否响应后面的操作 </li>
-</ul>
-<h3 id="2-使用场景"><a href="#2-使用场景" class="headerlink" title="2.!使用场景"></a>2.!使用场景</h3><ul>
-<li>对Optional做强制解包</li>
-<li>声明 隐式解包的可选类型的时候, 一般用于类中的属性</li>
-</ul>
-<h3 id="3-is-as-as？-as"><a href="#3-is-as-as？-as" class="headerlink" title="3.is as as？ as!"></a>3.is as as？ as!</h3><ul>
-<li>is来检查一个实例是否特定子类别</li>
-<li>as 用作向上转型（upcast）</li>
-<li>as? 可选形式的型別检查总是返回一个（optional value），并且如果向下转是不可能的，可选值将是 nil 。这使你能够检查向下转型是否成功。ps:成功的话返回可选类型值（optional），需要我们拆包使用。（见下方代码）</li>
-<li>as! 只有你可以确定向下转型一定会成功时，才使用强制形式。当你视图向下转型为一个不正確的类型时，强制形式的类型检查会引发一个执行时错误。</li>
-</ul>
-<h3 id="TIP-以上是对容易疑惑的知识点一个简练式的梳理，并未做详细深入表述。"><a href="#TIP-以上是对容易疑惑的知识点一个简练式的梳理，并未做详细深入表述。" class="headerlink" title="TIP:以上是对容易疑惑的知识点一个简练式的梳理，并未做详细深入表述。"></a>TIP:以上是对容易疑惑的知识点一个简练式的梳理，并未做详细深入表述。</h3><h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><p><a href="https://www.gitbook.com/book/tommy60703/swift-language-traditional-chinese/details" target="_blank" rel="external">@《The Sw­ift Pr­ogramm­ing La­nguage­》正體中文版</a></p>
-<p><a href="http://swifter.tips/implicitly-optional/" target="_blank" rel="external">@隐式解包 OPTIONAL</a></p>
-
-          
+          <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>最近有朋友咨询过多次关于swift中? ! ?? as? as! Any AnyObject这些符号到底表示什么意思，如何使用。对于初学者，在看swift代码时，对满屏的这些符号，表示很晕。借此机会，我把自己对此的理解记录于此。</p>
+<p>话说一切要先以可选类型Optional说起~~<br>
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2016/10/18/swift-Optional-延伸开来/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
         
       
     </div>
@@ -530,6 +474,13 @@
           
 
           
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/09/19/适配Xcode8和iOS10/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/09/19/适配Xcode8和iOS10/" itemprop="commentsCount"></span>
+                </a>
+              </span>
             
           
 
@@ -624,6 +575,13 @@
 
           
             
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/09/12/亲自整理-Mac上搭建基于GitHub-Page的Hexo博客/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/09/12/亲自整理-Mac上搭建基于GitHub-Page的Hexo博客/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
           
 
           
@@ -644,56 +602,14 @@
 
       
         
-          
-            <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>写作，我认为是一件很有意义的事情。有一个地方，可以记录自己的所思所想，必是一件妙不可言的事情。</p>
+          <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>写作，我认为是一件很有意义的事情。有一个地方，可以记录自己的所思所想，必是一件妙不可言的事情。</p>
 <p>作为一个技术男，喜欢捣腾，是一个必备的属性吧。用惯了世面上的博客平台之后，何不搭建一个独立的个人博客。目前搭建独立的个人博客有很多种方式，你可以选择购买主机搭建动态博客 - WordPress等，也可以使用Github Pages来搭建一个静态的个人博客。我选择了现在很热门的Github Pages + Hexo 的方式来搭建独立的个人博客。</p>
-<p>以下教程，亲自试验，绝对可用。</p>
-<h1 id="开始搭建"><a href="#开始搭建" class="headerlink" title="开始搭建"></a>开始搭建</h1><h2 id="一-搭建Git环境"><a href="#一-搭建Git环境" class="headerlink" title="一:搭建Git环境"></a>一:搭建Git环境</h2><p>登录你的Github帐号，新建仓库，名为用户名.github.io固定写法，如yituwangpeng.github.io</p>
-<h2 id="二-安装Hexo"><a href="#二-安装Hexo" class="headerlink" title="二:安装Hexo"></a>二:安装Hexo</h2><h3 id="2-1安装前提"><a href="#2-1安装前提" class="headerlink" title="2.1安装前提"></a>2.1安装前提</h3><p>要使用Hexo，需要在你的系统中支持Nodejs以及Git。</p>
-<ul>
-<li><p>Git：Mac自带，无需安装。</p>
-</li>
-<li><p>Nodejs：安装<a href="https://nodejs.org/en/" target="_blank" rel="external">Nodejs</a> ，请进入Node.js 的官网下载安装。</p>
-</li>
-</ul>
-<h3 id="2-2安装Hexo"><a href="#2-2安装Hexo" class="headerlink" title="2.2安装Hexo"></a>2.2安装Hexo</h3><h4 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ sudo npm install -g hexo-cli</div></pre></td></tr></table></figure>
-<p>注意坑一：Hexo官网上的安装命令是$ npm install -g hexo-cli，安装时不要忘记前面加上sudo，否则会因为权限问题报错。</p>
-<h4 id="初始化"><a href="#初始化" class="headerlink" title="初始化"></a>初始化</h4><p>终端cd到一个你选定的目录，执行hexo init命令：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo init blog</div></pre></td></tr></table></figure>
-<p>blog是你建立的文件夹名称。cd到blog文件夹下，执行如下命令，安装npm：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ npm install</div></pre></td></tr></table></figure>
-<p>一旦安装之后，blog文件夹下的文件内容有</p>
-<ol>
-<li>_config.yml    </li>
-<li>db.json </li>
-<li>node_modules </li>
-<li>package.json</li>
-<li>scaffolds</li>
-<li>source</li>
-<li>themes</li>
-</ol>
-<p>此时，浏览器中打开网址<a href="http://localhost:4000，能看到如下页面,一篇内置的blog" target="_blank" rel="external">http://localhost:4000，能看到如下页面,一篇内置的blog</a></p>
-<p><img src="https://raw.githubusercontent.com/jeasonstudio/images/8b550fd8d102bf7625f47511b35489612626636d/20160526/hexo4000.png" alt="Mou icon"></p>
-<h3 id="2-3关联Github"><a href="#2-3关联Github" class="headerlink" title="2.3关联Github"></a>2.3关联Github</h3><p>终端cd到blog文件夹下，vim打开_config.yml，命令如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ vim _config.yml</div></pre></td></tr></table></figure>
-<p>打开后往下滑到最后，修改成下边的样子：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">deploy:</div><div class="line">    type: git</div><div class="line">    repository: https://github.com/yituwangpeng/yituwangpeng.github.io.git</div><div class="line">   branch: master</div></pre></td></tr></table></figure>
-<p>注意坑二：在配置所有的_config.yml文件时（包括theme中的），在所有的冒号:后边都要加一个空格，否则执行hexo命令会报错，切记 切记</p>
-<p>在blog文件夹目录下按顺序执行以下命令：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ hero generate</div><div class="line">$ hero deploy</div></pre></td></tr></table></figure>
-<p>此时，浏览器中打开网址<a href="http://yituwangpeng.github.io（将yituwangpeng换成你的用户名）能看到和打开http://localhost:4000时一样的页面。" target="_blank" rel="external">http://yituwangpeng.github.io（将yituwangpeng换成你的用户名）能看到和打开http://localhost:4000时一样的页面。</a></p>
-<h4 id="–到此准备工作基本做完。"><a href="#–到此准备工作基本做完。" class="headerlink" title="–到此准备工作基本做完。"></a>–到此准备工作基本做完。</h4><h2 id="三-发布文章"><a href="#三-发布文章" class="headerlink" title="三:发布文章"></a>三:发布文章</h2><p>终端cd到blog文件夹下，执行如下命令新建文章：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo new &quot;MyFirstBlog&quot;</div></pre></td></tr></table></figure>
-<p>名为MyFirstBlog.md的文件会建在目录/blog/source/_posts下。你可以用任何一款Mardown编辑器来写文章。在这里我推荐使用<a href="http://25.io/mou/" target="_blank" rel="external">Mou</a></p>
-<p>编写完成之后执行</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ hero generate</div><div class="line">$ hero deploy</div></pre></td></tr></table></figure>
-<p>即可完成blog的部署</p>
-<h2 id="四-Hexo的主题配置"><a href="#四-Hexo的主题配置" class="headerlink" title="四:Hexo的主题配置"></a>四:Hexo的主题配置</h2><p>Hexo拥有多种主题可以选择配置，详细配置可看Hexo<a href="https://hexo.io/zh-cn/docs/themes.html" target="_blank" rel="external">传送门</a></p>
-<p>我使用的主题是Next <a href="http://theme-next.iissnan.com/getting-started.html" target="_blank" rel="external">传送门</a></p>
-<h2 id="五-小结"><a href="#五-小结" class="headerlink" title="五:小结"></a>五:小结</h2><p>本文简单的记录了我搭建hexo博客的过程，内容有些简单。默认前提是Github经常使用，所以对Github部分没有详细介绍。</p>
-<p>关于如何绑定自己的域名，会在下片文章中指出。</p>
-
-          
+<p>以下教程，亲自试验，绝对可用。<br>
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2016/09/12/亲自整理-Mac上搭建基于GitHub-Page的Hexo博客/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
         
       
     </div>
@@ -764,6 +680,13 @@
 
           
             
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/09/12/hello-world/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/09/12/hello-world/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
           
 
           
@@ -784,18 +707,13 @@
 
       
         
-          
-            <p>Welcome to <a href="https://hexo.io/" target="_blank" rel="external">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/" target="_blank" rel="external">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html" target="_blank" rel="external">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues" target="_blank" rel="external">GitHub</a>.</p>
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo new <span class="string">"My New Post"</span></div></pre></td></tr></table></figure>
-<p>More info: <a href="https://hexo.io/docs/writing.html" target="_blank" rel="external">Writing</a></p>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo server</div></pre></td></tr></table></figure>
-<p>More info: <a href="https://hexo.io/docs/server.html" target="_blank" rel="external">Server</a></p>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo generate</div></pre></td></tr></table></figure>
-<p>More info: <a href="https://hexo.io/docs/generating.html" target="_blank" rel="external">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo deploy</div></pre></td></tr></table></figure>
-<p>More info: <a href="https://hexo.io/docs/deployment.html" target="_blank" rel="external">Deployment</a></p>
-
-          
+          <p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
+<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2>
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2016/09/12/hello-world/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
         
       
     </div>
@@ -855,7 +773,7 @@
       <section class="site-overview sidebar-panel  sidebar-panel-active ">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
           <img class="site-author-image" itemprop="image"
-               src="https://thumbnail0.baidupcs.com/thumbnail/537f5c1350e26d67f5e7894d489f9af2?fid=2401735589-250528-742988016889911&time=1476093600&rt=sh&sign=FDTAER-DCb740ccc5511e5e8fedcff06b081203-HbiBtwcvOGuQR3hRmgGVvoEkhKo%3D&expires=8h&chkv=0&chkbd=0&chkpc=&dp-logid=6581221256807258147&dp-callid=0&size=c710_u400&quality=100"
+               src="/uploads/avatar.jpeg"
                alt="yitu" />
           <p class="site-author-name" itemprop="name">yitu</p>
           <p class="site-description motion-element" itemprop="description">software R&D</p>
@@ -891,6 +809,17 @@
         
 
         <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/yituwangpeng" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
           
         </div>
 
@@ -1008,9 +937,30 @@
 
   
 
+  
+    
+  
 
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"yitupeng"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
 
   
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
 
 
 

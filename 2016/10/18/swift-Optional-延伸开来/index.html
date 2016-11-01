@@ -68,7 +68,7 @@
 <link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="iOS,Swift," />
+  <meta name="keywords" content="Swift,iOS," />
 
 
 
@@ -87,21 +87,18 @@
 
 
 <meta name="description" content="背景最近有朋友咨询过多次关于swift中? ! ?? as? as! Any AnyObject这些符号到底表示什么意思，如何使用。对于初学者，在看swift代码时，对满屏的这些符号，表示很晕。借此机会，我把自己对此的理解记录于此。
-话说一切要先以可选类型Optional说起~~
-一.可选类型Optional1.1Optional初识C 和 Objective-C 中并沒有 optional这个概">
+话说一切要先以可选类型Optional说起~~">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Swift Optional 易疑惑">
 <meta property="og:url" content="http://yoursite.com/2016/10/18/swift-Optional-延伸开来/index.html">
 <meta property="og:site_name" content="yitu's blog">
 <meta property="og:description" content="背景最近有朋友咨询过多次关于swift中? ! ?? as? as! Any AnyObject这些符号到底表示什么意思，如何使用。对于初学者，在看swift代码时，对满屏的这些符号，表示很晕。借此机会，我把自己对此的理解记录于此。
-话说一切要先以可选类型Optional说起~~
-一.可选类型Optional1.1Optional初识C 和 Objective-C 中并沒有 optional这个概">
-<meta property="og:updated_time" content="2016-10-18T10:23:46.000Z">
+话说一切要先以可选类型Optional说起~~">
+<meta property="og:updated_time" content="2016-11-01T08:22:57.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Swift Optional 易疑惑">
 <meta name="twitter:description" content="背景最近有朋友咨询过多次关于swift中? ! ?? as? as! Any AnyObject这些符号到底表示什么意思，如何使用。对于初学者，在看swift代码时，对满屏的这些符号，表示很晕。借此机会，我把自己对此的理解记录于此。
-话说一切要先以可选类型Optional说起~~
-一.可选类型Optional1.1Optional初识C 和 Objective-C 中并沒有 optional这个概">
+话说一切要先以可选类型Optional说起~~">
 
 
 
@@ -113,8 +110,8 @@
     fancybox: true,
     motion: true,
     duoshuo: {
-      userId: 0,
-      author: '博主'
+      userId: 6347889523870926000,
+      author: '博主大人一土'
     }
   };
 </script>
@@ -265,6 +262,13 @@
 
           
             
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/10/18/swift-Optional-延伸开来/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/10/18/swift-Optional-延伸开来/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
           
 
           
@@ -285,7 +289,7 @@
 
       
         <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>最近有朋友咨询过多次关于swift中? ! ?? as? as! Any AnyObject这些符号到底表示什么意思，如何使用。对于初学者，在看swift代码时，对满屏的这些符号，表示很晕。借此机会，我把自己对此的理解记录于此。</p>
-<p>话说一切要先以可选类型Optional说起~~</p>
+<p>话说一切要先以可选类型Optional说起~~<br><a id="more"></a></p>
 <h2 id="一-可选类型Optional"><a href="#一-可选类型Optional" class="headerlink" title="一.可选类型Optional"></a>一.可选类型Optional</h2><h3 id="1-1Optional初识"><a href="#1-1Optional初识" class="headerlink" title="1.1Optional初识"></a>1.1Optional初识</h3><p>C 和 Objective-C 中并沒有 optional这个概念。可选类型类似于Objective-C中指针的nil值，但是nil只对类(class)有用，指对象不存在，对于结构体，基本的 C 数据类型或者枚举类型不起作用。对于这些类型，Objective-C 方法一般返回一个特殊值（比如NSNotFound）来表示值不存在。但是，Swift 的 optional 可以表示任意类型的值不存在。任何类型的可选类型都能赋值为 nil，而不仅限于对象类型。</p>
 <p>举个例子<br>Swift 的String 有一個叫做toInt的方法，作用是将一個String值转换成一个Int值。然而，并不是所有的字符串都可以转换成一个整數。字符串”123”可以被转换成数字123，但是字符串”hello, world”不行。</p>
 <p>如下代码</p>
@@ -378,9 +382,9 @@
       
         <div class="post-tags">
           
-            <a href="/tags/iOS/" rel="tag">#iOS</a>
-          
             <a href="/tags/Swift/" rel="tag">#Swift</a>
+          
+            <a href="/tags/iOS/" rel="tag">#iOS</a>
           
         </div>
       
@@ -425,6 +429,10 @@
           
   <div class="comments" id="comments">
     
+      <div class="ds-thread" data-thread-key="2016/10/18/swift-Optional-延伸开来/"
+           data-title="Swift Optional 易疑惑" data-url="http://yoursite.com/2016/10/18/swift-Optional-延伸开来/">
+      </div>
+    
   </div>
 
 
@@ -459,7 +467,7 @@
       <section class="site-overview sidebar-panel ">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
           <img class="site-author-image" itemprop="image"
-               src="https://thumbnail0.baidupcs.com/thumbnail/537f5c1350e26d67f5e7894d489f9af2?fid=2401735589-250528-742988016889911&time=1476093600&rt=sh&sign=FDTAER-DCb740ccc5511e5e8fedcff06b081203-HbiBtwcvOGuQR3hRmgGVvoEkhKo%3D&expires=8h&chkv=0&chkbd=0&chkpc=&dp-logid=6581221256807258147&dp-callid=0&size=c710_u400&quality=100"
+               src="/uploads/avatar.jpeg"
                alt="yitu" />
           <p class="site-author-name" itemprop="name">yitu</p>
           <p class="site-description motion-element" itemprop="description">software R&D</p>
@@ -495,6 +503,17 @@
         
 
         <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/yituwangpeng" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
           
         </div>
 
@@ -627,9 +646,30 @@
 
   
 
+  
+    
+  
 
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"yitupeng"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
 
   
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
 
 
 

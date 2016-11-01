@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://yoursite.com/"/>
-  <updated>2016-10-27T10:15:44.000Z</updated>
+  <updated>2016-11-01T08:20:14.000Z</updated>
   <id>http://yoursite.com/</id>
   
   <author>
@@ -20,14 +20,14 @@
     <link href="http://yoursite.com/2016/10/27/%E4%B8%BA%E5%AA%B3%E5%A6%87%E5%84%BF%E5%86%99VBA/"/>
     <id>http://yoursite.com/2016/10/27/为媳妇儿写VBA/</id>
     <published>2016-10-27T09:25:16.000Z</published>
-    <updated>2016-10-27T10:15:44.000Z</updated>
+    <updated>2016-11-01T08:20:14.000Z</updated>
     
     <content type="html"><![CDATA[<h2 id="写在前面"><a href="#写在前面" class="headerlink" title="写在前面"></a>写在前面</h2><p>我家媳妇儿（以下简称领导）是做金融行业数据分析相关工作，每天都需要跟海量的Excel数据打交道。昨天，非得让我给写一个VBA程序，实现一个可以自动处理数据的Case.语气强硬：你不是“扛把子”吗，“扛把子”程序员不是什么都会写吗？呃。。。话说“扛把子”程序员这个称号如何而来。。。我竟无言以对。没办法，硬着头皮撸vba吧，不能失掉自己在领导心目中伟岸的形象~~</p>
 <h2 id="甩起膀子-干活吧"><a href="#甩起膀子-干活吧" class="headerlink" title="甩起膀子 干活吧"></a>甩起膀子 干活吧</h2><p>在kindle上搜索到一本《别怕，ExcelVBA其实很简单》，看评价挺高，下单，购买。并没有急于去看书，根据领导的业务要求，理了一下思路。需要把400多个Excel工作簿里某个工作表的所有品类的每个品类的GMV算出来，并把算出的结果–放到一个新的Excel文件中，方便领导对结果进行处理分析。</p>
 <p>业务逻辑理顺了，那就一步一步堆代码吧。文件夹遍历，工作簿操作，工作表操作，数据类型，控制语句重点是循环，单元格操作。重点就这些。领导要的比较急，我也就非常之时用非常之法了。</p>
 <p>还好，不辱使命，凌晨1点终于搞定。</p>
 <p>交付领导测试，完美运行。</p>
-<p>PS:今天领导说，非常好用，大大提高了工作效率。O(∩_∩)O哈哈~</p>
+<p>PS:今天领导说，非常好用，大大提高了工作效率。O(∩_∩)O哈哈~<br><a id="more"></a></p>
 <h2 id="代码记录"><a href="#代码记录" class="headerlink" title="代码记录"></a>代码记录</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div></pre></td><td class="code"><pre><div class="line">Sub AutoCalculate()</div><div class="line">Dim path As String</div><div class="line">Dim FileName As String</div><div class="line">Dim LastCell As Range</div><div class="line">Dim Wkb As Workbook</div><div class="line">Dim WS As Worksheet</div><div class="line">Dim ThisWB As String</div><div class="line"></div><div class="line">Dim MyDir As String</div><div class="line">MyDir = ThisWorkbook.path &amp; &quot;\&quot;</div><div class="line"></div><div class="line">Dim thisWCRowsCount As Integer</div><div class="line">thisWCRowsCount = 0</div><div class="line"></div><div class="line">ThisWB = ThisWorkbook.Name</div><div class="line">Application.EnableEvents = False</div><div class="line">Application.ScreenUpdating = False</div><div class="line">path = MyDir</div><div class="line">FileName = Dir(path &amp; &quot;\*.xlsx&quot;, vbNormal)</div><div class="line"></div><div class="line">Do Until FileName = &quot;&quot;</div><div class="line"></div><div class="line">If FileName &lt;&gt; ThisWB Then</div><div class="line">Set Wkb = Workbooks.Open(FileName:=path &amp; &quot;\&quot; &amp; FileName)</div><div class="line">For Each WS In Wkb.Worksheets</div><div class="line">Set LastCell = WS.Cells.SpecialCells(xlCellTypeLastCell)</div><div class="line"></div><div class="line">If LastCell.Value = &quot;&quot; And LastCell.Address = Range(&quot;$A$1&quot;).Address Then</div><div class="line"></div><div class="line">Else</div><div class="line"></div><div class="line">If WS.Name = &quot;品牌热门排行&quot; Then</div><div class="line"></div><div class="line">&apos;遍历每一行</div><div class="line">Dim i, j</div><div class="line">Dim sum</div><div class="line"></div><div class="line">nowRow = 1</div><div class="line">sum = WS.Cells(1, 6).Value</div><div class="line">i = 1</div><div class="line">j = WS.UsedRange.Rows.Count</div><div class="line"></div><div class="line">For i = 1 To j - 1</div><div class="line"></div><div class="line">     If WS.Cells(i + 1, 3).Value = WS.Cells(i, 3).Value Then</div><div class="line"></div><div class="line">        sum = sum + WS.Cells(i + 1, 6).Value</div><div class="line"></div><div class="line">     Else</div><div class="line"></div><div class="line">        thisWCRowsCount = thisWCRowsCount + 1</div><div class="line">        ThisWorkbook.Sheets(1).Cells(thisWCRowsCount, 3).Value = sum</div><div class="line">        ThisWorkbook.Sheets(1).Cells(thisWCRowsCount, 2).Value = WS.Cells(i, 3).Value</div><div class="line">        ThisWorkbook.Sheets(1).Cells(thisWCRowsCount, 1).Value = WS.Cells(i, 1).Value</div><div class="line">        sum = WS.Cells(i + 1, 6).Value</div><div class="line">     End If</div><div class="line"></div><div class="line">        If i + 1 = j Then</div><div class="line">        thisWCRowsCount = thisWCRowsCount + 1</div><div class="line">        ThisWorkbook.Sheets(1).Cells(thisWCRowsCount, 3).Value = sum</div><div class="line">        ThisWorkbook.Sheets(1).Cells(thisWCRowsCount, 2).Value = WS.Cells(i + 1, 3).Value</div><div class="line">        ThisWorkbook.Sheets(1).Cells(thisWCRowsCount, 1).Value = WS.Cells(i + 1, 1).Value</div><div class="line">        End If</div><div class="line">Next</div><div class="line">&apos;以上为遍历每一行代码</div><div class="line">End If</div><div class="line"></div><div class="line">End If</div><div class="line">Next WS</div><div class="line"></div><div class="line">Wkb.Close False</div><div class="line">End If</div><div class="line"></div><div class="line">FileName = Dir()</div><div class="line">Loop</div><div class="line"></div><div class="line">Application.EnableEvents = True</div><div class="line">Application.ScreenUpdating = True</div><div class="line"></div><div class="line">Set Wkb = Nothing</div><div class="line">Set LastCell = Nothing</div><div class="line">End Sub</div></pre></td></tr></table></figure>
 <h2 id="新技能Get"><a href="#新技能Get" class="headerlink" title="新技能Get"></a>新技能Get</h2><p>接触一门新语言，一晚上写出一个VBA小程序，解决一个特定Case。收获更多的是对学习思路和方法的反思。任何一门编程语言，纸上谈兵，纯理论的学习，见效非常慢，也是不科学的。唯有放到实际生产中，在实践中学习，方能提高学习效率。任何的学习，都理应如此。</p>
 <h2 id="写在文后"><a href="#写在文后" class="headerlink" title="写在文后"></a>写在文后</h2><p>此文仅仅是自写自看，也算是开一个深入学习VBA的口子吧。以后肯定还会结合领导的需求写出其他的小程序，代码也会存放在这里。另外在VBA程序优化和抽象上会作进一步处理，目标是能为领导的日常工作建立一套模型，实现尽可能的办公自动化。最浪漫的事莫过于此吧~~   O(∩_∩)O</p>
@@ -36,7 +36,12 @@
     
     <summary type="html">
     
-      &lt;h2 id=&quot;写在前面&quot;&gt;&lt;a href=&quot;#写在前面&quot; class=&quot;headerlink&quot; title=&quot;写在前面&quot;&gt;&lt;/a&gt;写在前面&lt;/h2&gt;&lt;p&gt;我家媳妇儿（以下简称领导）是做金融行业数据分析相关工作，每天都需要跟海量的Excel数据打交道。昨天，非得让我给写一个VBA
+      &lt;h2 id=&quot;写在前面&quot;&gt;&lt;a href=&quot;#写在前面&quot; class=&quot;headerlink&quot; title=&quot;写在前面&quot;&gt;&lt;/a&gt;写在前面&lt;/h2&gt;&lt;p&gt;我家媳妇儿（以下简称领导）是做金融行业数据分析相关工作，每天都需要跟海量的Excel数据打交道。昨天，非得让我给写一个VBA程序，实现一个可以自动处理数据的Case.语气强硬：你不是“扛把子”吗，“扛把子”程序员不是什么都会写吗？呃。。。话说“扛把子”程序员这个称号如何而来。。。我竟无言以对。没办法，硬着头皮撸vba吧，不能失掉自己在领导心目中伟岸的形象~~&lt;/p&gt;
+&lt;h2 id=&quot;甩起膀子-干活吧&quot;&gt;&lt;a href=&quot;#甩起膀子-干活吧&quot; class=&quot;headerlink&quot; title=&quot;甩起膀子 干活吧&quot;&gt;&lt;/a&gt;甩起膀子 干活吧&lt;/h2&gt;&lt;p&gt;在kindle上搜索到一本《别怕，ExcelVBA其实很简单》，看评价挺高，下单，购买。并没有急于去看书，根据领导的业务要求，理了一下思路。需要把400多个Excel工作簿里某个工作表的所有品类的每个品类的GMV算出来，并把算出的结果–放到一个新的Excel文件中，方便领导对结果进行处理分析。&lt;/p&gt;
+&lt;p&gt;业务逻辑理顺了，那就一步一步堆代码吧。文件夹遍历，工作簿操作，工作表操作，数据类型，控制语句重点是循环，单元格操作。重点就这些。领导要的比较急，我也就非常之时用非常之法了。&lt;/p&gt;
+&lt;p&gt;还好，不辱使命，凌晨1点终于搞定。&lt;/p&gt;
+&lt;p&gt;交付领导测试，完美运行。&lt;/p&gt;
+&lt;p&gt;PS:今天领导说，非常好用，大大提高了工作效率。O(∩_∩)O哈哈~&lt;br&gt;
     
     </summary>
     
@@ -50,10 +55,10 @@
     <link href="http://yoursite.com/2016/10/18/swift-Optional-%E5%BB%B6%E4%BC%B8%E5%BC%80%E6%9D%A5/"/>
     <id>http://yoursite.com/2016/10/18/swift-Optional-延伸开来/</id>
     <published>2016-10-18T07:12:08.000Z</published>
-    <updated>2016-10-18T10:23:46.000Z</updated>
+    <updated>2016-11-01T08:22:57.000Z</updated>
     
     <content type="html"><![CDATA[<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>最近有朋友咨询过多次关于swift中? ! ?? as? as! Any AnyObject这些符号到底表示什么意思，如何使用。对于初学者，在看swift代码时，对满屏的这些符号，表示很晕。借此机会，我把自己对此的理解记录于此。</p>
-<p>话说一切要先以可选类型Optional说起~~</p>
+<p>话说一切要先以可选类型Optional说起~~<br><a id="more"></a></p>
 <h2 id="一-可选类型Optional"><a href="#一-可选类型Optional" class="headerlink" title="一.可选类型Optional"></a>一.可选类型Optional</h2><h3 id="1-1Optional初识"><a href="#1-1Optional初识" class="headerlink" title="1.1Optional初识"></a>1.1Optional初识</h3><p>C 和 Objective-C 中并沒有 optional这个概念。可选类型类似于Objective-C中指针的nil值，但是nil只对类(class)有用，指对象不存在，对于结构体，基本的 C 数据类型或者枚举类型不起作用。对于这些类型，Objective-C 方法一般返回一个特殊值（比如NSNotFound）来表示值不存在。但是，Swift 的 optional 可以表示任意类型的值不存在。任何类型的可选类型都能赋值为 nil，而不仅限于对象类型。</p>
 <p>举个例子<br>Swift 的String 有一個叫做toInt的方法，作用是将一個String值转换成一个Int值。然而，并不是所有的字符串都可以转换成一个整數。字符串”123”可以被转换成数字123，但是字符串”hello, world”不行。</p>
 <p>如下代码</p>
@@ -128,14 +133,15 @@
     
     <summary type="html">
     
-      &lt;h2 id=&quot;背景&quot;&gt;&lt;a href=&quot;#背景&quot; class=&quot;headerlink&quot; title=&quot;背景&quot;&gt;&lt;/a&gt;背景&lt;/h2&gt;&lt;p&gt;最近有朋友咨询过多次关于swift中? ! ?? as? as! Any AnyObject这些符号到底表示什么意思，如何使用。对于初学者，
+      &lt;h2 id=&quot;背景&quot;&gt;&lt;a href=&quot;#背景&quot; class=&quot;headerlink&quot; title=&quot;背景&quot;&gt;&lt;/a&gt;背景&lt;/h2&gt;&lt;p&gt;最近有朋友咨询过多次关于swift中? ! ?? as? as! Any AnyObject这些符号到底表示什么意思，如何使用。对于初学者，在看swift代码时，对满屏的这些符号，表示很晕。借此机会，我把自己对此的理解记录于此。&lt;/p&gt;
+&lt;p&gt;话说一切要先以可选类型Optional说起~~&lt;br&gt;
     
     </summary>
     
     
-      <category term="iOS" scheme="http://yoursite.com/tags/iOS/"/>
-    
       <category term="Swift" scheme="http://yoursite.com/tags/Swift/"/>
+    
+      <category term="iOS" scheme="http://yoursite.com/tags/iOS/"/>
     
   </entry>
   
@@ -160,11 +166,11 @@
     <link href="http://yoursite.com/2016/09/12/%E4%BA%B2%E8%87%AA%E6%95%B4%E7%90%86-Mac%E4%B8%8A%E6%90%AD%E5%BB%BA%E5%9F%BA%E4%BA%8EGitHub-Page%E7%9A%84Hexo%E5%8D%9A%E5%AE%A2/"/>
     <id>http://yoursite.com/2016/09/12/亲自整理-Mac上搭建基于GitHub-Page的Hexo博客/</id>
     <published>2016-09-12T09:09:10.000Z</published>
-    <updated>2016-10-10T09:25:18.000Z</updated>
+    <updated>2016-11-01T08:22:29.000Z</updated>
     
     <content type="html"><![CDATA[<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>写作，我认为是一件很有意义的事情。有一个地方，可以记录自己的所思所想，必是一件妙不可言的事情。</p>
 <p>作为一个技术男，喜欢捣腾，是一个必备的属性吧。用惯了世面上的博客平台之后，何不搭建一个独立的个人博客。目前搭建独立的个人博客有很多种方式，你可以选择购买主机搭建动态博客 - WordPress等，也可以使用Github Pages来搭建一个静态的个人博客。我选择了现在很热门的Github Pages + Hexo 的方式来搭建独立的个人博客。</p>
-<p>以下教程，亲自试验，绝对可用。</p>
+<p>以下教程，亲自试验，绝对可用。<br><a id="more"></a></p>
 <h1 id="开始搭建"><a href="#开始搭建" class="headerlink" title="开始搭建"></a>开始搭建</h1><h2 id="一-搭建Git环境"><a href="#一-搭建Git环境" class="headerlink" title="一:搭建Git环境"></a>一:搭建Git环境</h2><p>登录你的Github帐号，新建仓库，名为用户名.github.io固定写法，如yituwangpeng.github.io</p>
 <h2 id="二-安装Hexo"><a href="#二-安装Hexo" class="headerlink" title="二:安装Hexo"></a>二:安装Hexo</h2><h3 id="2-1安装前提"><a href="#2-1安装前提" class="headerlink" title="2.1安装前提"></a>2.1安装前提</h3><p>要使用Hexo，需要在你的系统中支持Nodejs以及Git。</p>
 <ul>
@@ -214,7 +220,8 @@
     <summary type="html">
     
       &lt;h1 id=&quot;前言&quot;&gt;&lt;a href=&quot;#前言&quot; class=&quot;headerlink&quot; title=&quot;前言&quot;&gt;&lt;/a&gt;前言&lt;/h1&gt;&lt;p&gt;写作，我认为是一件很有意义的事情。有一个地方，可以记录自己的所思所想，必是一件妙不可言的事情。&lt;/p&gt;
-&lt;p&gt;作为一个技术男，喜欢捣腾，是一
+&lt;p&gt;作为一个技术男，喜欢捣腾，是一个必备的属性吧。用惯了世面上的博客平台之后，何不搭建一个独立的个人博客。目前搭建独立的个人博客有很多种方式，你可以选择购买主机搭建动态博客 - WordPress等，也可以使用Github Pages来搭建一个静态的个人博客。我选择了现在很热门的Github Pages + Hexo 的方式来搭建独立的个人博客。&lt;/p&gt;
+&lt;p&gt;以下教程，亲自试验，绝对可用。&lt;br&gt;
     
     </summary>
     
@@ -228,10 +235,11 @@
     <link href="http://yoursite.com/2016/09/12/hello-world/"/>
     <id>http://yoursite.com/2016/09/12/hello-world/</id>
     <published>2016-09-12T08:21:59.000Z</published>
-    <updated>2016-09-12T08:21:59.000Z</updated>
+    <updated>2016-11-01T08:22:44.000Z</updated>
     
     <content type="html"><![CDATA[<p>Welcome to <a href="https://hexo.io/" target="_blank" rel="external">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/" target="_blank" rel="external">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html" target="_blank" rel="external">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues" target="_blank" rel="external">GitHub</a>.</p>
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo new <span class="string">"My New Post"</span></div></pre></td></tr></table></figure>
+<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><a id="more"></a>
+<h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo new <span class="string">"My New Post"</span></div></pre></td></tr></table></figure>
 <p>More info: <a href="https://hexo.io/docs/writing.html" target="_blank" rel="external">Writing</a></p>
 <h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo server</div></pre></td></tr></table></figure>
 <p>More info: <a href="https://hexo.io/docs/server.html" target="_blank" rel="external">Server</a></p>
@@ -243,7 +251,8 @@
     
     <summary type="html">
     
-      &lt;p&gt;Welcome to &lt;a href=&quot;https://hexo.io/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;Hexo&lt;/a&gt;! This is your very first post. Check &lt;a href=&quot;https://hexo.
+      &lt;p&gt;Welcome to &lt;a href=&quot;https://hexo.io/&quot;&gt;Hexo&lt;/a&gt;! This is your very first post. Check &lt;a href=&quot;https://hexo.io/docs/&quot;&gt;documentation&lt;/a&gt; for more info. If you get any problems when using Hexo, you can find the answer in &lt;a href=&quot;https://hexo.io/docs/troubleshooting.html&quot;&gt;troubleshooting&lt;/a&gt; or you can ask me on &lt;a href=&quot;https://github.com/hexojs/hexo/issues&quot;&gt;GitHub&lt;/a&gt;.&lt;/p&gt;
+&lt;h2 id=&quot;Quick-Start&quot;&gt;&lt;a href=&quot;#Quick-Start&quot; class=&quot;headerlink&quot; title=&quot;Quick Start&quot;&gt;&lt;/a&gt;Quick Start&lt;/h2&gt;
     
     </summary>
     
