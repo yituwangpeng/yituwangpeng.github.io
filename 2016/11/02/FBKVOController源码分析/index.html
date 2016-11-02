@@ -1,0 +1,687 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Objective-C,iOS," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="yitu's blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="PS：(此文为搬运篇)—逐渐将之前自己在其它地方写的文章搬运到这个博客上。背景Key-Value Observing ，通过在特定对象之间监听一个特定的 keypath 的改变进行事件内省。例如：一个 ProgressView 可以观察 网络请求的 numberOfBytesRead 来更新它自己的 progress 属性。
+这个方案已经被明确定义，获得框架级支持，可以方便地采用。开发人员不需要添">
+<meta property="og:type" content="article">
+<meta property="og:title" content="FBKVOController源码分析">
+<meta property="og:url" content="http://yoursite.com/2016/11/02/FBKVOController源码分析/index.html">
+<meta property="og:site_name" content="yitu's blog">
+<meta property="og:description" content="PS：(此文为搬运篇)—逐渐将之前自己在其它地方写的文章搬运到这个博客上。背景Key-Value Observing ，通过在特定对象之间监听一个特定的 keypath 的改变进行事件内省。例如：一个 ProgressView 可以观察 网络请求的 numberOfBytesRead 来更新它自己的 progress 属性。
+这个方案已经被明确定义，获得框架级支持，可以方便地采用。开发人员不需要添">
+<meta property="og:updated_time" content="2016-11-02T03:52:59.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="FBKVOController源码分析">
+<meta name="twitter:description" content="PS：(此文为搬运篇)—逐渐将之前自己在其它地方写的文章搬运到这个博客上。背景Key-Value Observing ，通过在特定对象之间监听一个特定的 keypath 的改变进行事件内省。例如：一个 ProgressView 可以观察 网络请求的 numberOfBytesRead 来更新它自己的 progress 属性。
+这个方案已经被明确定义，获得框架级支持，可以方便地采用。开发人员不需要添">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 6347889523870926000,
+      author: '博主大人一土'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2016/11/02/FBKVOController源码分析/"/>
+
+  <title> FBKVOController源码分析 | yitu's blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">yitu's blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                FBKVOController源码分析
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-11-02T10:43:32+08:00" content="2016-11-02">
+              2016-11-02
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/11/02/FBKVOController源码分析/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/11/02/FBKVOController源码分析/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h4 id="PS：-此文为搬运篇-—逐渐将之前自己在其它地方写的文章搬运到这个博客上。"><a href="#PS：-此文为搬运篇-—逐渐将之前自己在其它地方写的文章搬运到这个博客上。" class="headerlink" title="PS：(此文为搬运篇)—逐渐将之前自己在其它地方写的文章搬运到这个博客上。"></a><code>PS：(此文为搬运篇)—逐渐将之前自己在其它地方写的文章搬运到这个博客上。</code></h4><h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>Key-Value Observing ，通过在特定对象之间监听一个特定的 keypath 的改变进行事件内省。例如：一个 ProgressView 可以观察 网络请求的 numberOfBytesRead 来更新它自己的 progress 属性。</p>
+<p>这个方案已经被明确定义，获得框架级支持，可以方便地采用。开发人员不需要添加任何代码，不需要设计自己的观察者模型，直接可以在工程里使用。其次，KVO的架构非常的强大，可以很容易的支持多个观察者观察同一个属性，以及相关的值。</p>
+<p>但是：<br>Apple原生KVO也有一些显而易见的缺点。</p>
+<ol>
+<li>添加和移除观察者要配对出现。移除一个未添加的观察者，程序会crash；重复添加观察者会造成回调方法多次调用，给程序造成逻辑上的混乱。</li>
+<li>添加观察者，移除观察者，通知回调，三块儿代码过于分散。</li>
+</ol>
+<p>那么，有没有改良版的KVO呢？Facebook出品的FBKVOController是同类中我觉得最好用，且源码简单，设计感好。</p>
+<p>ps:有人估计会提到ReactiveCocoa，我个人并不建议在项目中使用这么庞大一个类库，学习成本太大，很不利于开展团队协作以及后期维护。（个人之见，不同意的可以忽略）<br><a id="more"></a></p>
+<h2 id="FBKVOController"><a href="#FBKVOController" class="headerlink" title="FBKVOController"></a>FBKVOController</h2><p>简单来说，FBKVOController是对KVO机制的一层封装，同时提供了线程安全的特性和并对如下这个臭名昭著的函数进行了封装，提供了干净的block的回调，避免了处理这个函数的逻辑散落的到处都是。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context</div></pre></td></tr></table></figure>
+<h3 id="先看用法，再看源码"><a href="#先看用法，再看源码" class="headerlink" title="先看用法，再看源码"></a>先看用法，再看源码</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">// create KVO controller with observer</div><div class="line">FBKVOController *KVOController = [FBKVOController controllerWithObserver:self];</div><div class="line">self.KVOController = KVOController;</div><div class="line"></div><div class="line">// observe clock date property</div><div class="line">[self.KVOController observe:clock keyPath:@&quot;date&quot; options:NSKeyValueObservingOptionInitial|NSKeyValueObservingOptionNew block:^(ClockView *clockView, Clock *clock, NSDictionary *change) &#123;</div><div class="line"></div><div class="line">  // update clock view with new value</div><div class="line">  clockView.date = change[NSKeyValueChangeNewKey];</div><div class="line">&#125;];</div></pre></td></tr></table></figure>
+<p>使用非常简单，提供了block回调。而且，并不需要考虑remove observer的事情。FBKVOController实现了“自释放”。关于“自释放”的概念会在文后予以详细解释。</p>
+<p>下面就让我们进入到源码中，按照代码执行顺序进行梳理拆分，化整为零进行分析。</p>
+<h2 id="源码之旅"><a href="#源码之旅" class="headerlink" title="源码之旅"></a>源码之旅</h2><h3 id="FBKVOController初始化"><a href="#FBKVOController初始化" class="headerlink" title="FBKVOController初始化"></a>FBKVOController初始化</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div></pre></td><td class="code"><pre><div class="line">@implementation FBKVOController</div><div class="line">&#123;</div><div class="line">  NSMapTable&lt;id, NSMutableSet&lt;_FBKVOInfo *&gt; *&gt; *_objectInfosMap;</div><div class="line">  pthread_mutex_t _lock;</div><div class="line">&#125;</div><div class="line"></div><div class="line"></div><div class="line">+ (instancetype)controllerWithObserver:(nullable id)observer</div><div class="line">&#123;</div><div class="line">  return [[self alloc] initWithObserver:observer];</div><div class="line">&#125;</div><div class="line"></div><div class="line">- (instancetype)initWithObserver:(nullable id)observer retainObserved:(BOOL)retainObserved</div><div class="line">&#123;</div><div class="line">  self = [super init];</div><div class="line">  if (nil != self) &#123;</div><div class="line">    _observer = observer;</div><div class="line">    NSPointerFunctionsOptions keyOptions = retainObserved ? NSPointerFunctionsStrongMemory|NSPointerFunctionsObjectPointerPersonality : NSPointerFunctionsWeakMemory|NSPointerFunctionsObjectPointerPersonality;</div><div class="line">    _objectInfosMap = [[NSMapTable alloc] initWithKeyOptions:keyOptions valueOptions:NSPointerFunctionsStrongMemory|NSPointerFunctionsObjectPersonality capacity:0];</div><div class="line">    pthread_mutex_init(&amp;_lock, NULL);</div><div class="line">  &#125;</div><div class="line">  return self;</div><div class="line">&#125;</div><div class="line"></div><div class="line">- (instancetype)initWithObserver:(nullable id)observer</div><div class="line">&#123;</div><div class="line">  return [self initWithObserver:observer retainObserved:YES];</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<ol>
+<li>首先我们可以看到，这个对象持有一个pthread_mutex_t及一个NSMapTable变量。这两个类型可能大家会有点不太熟悉。pthread_mutex_t是互斥锁，互斥锁通过确保一次只有一个线程执行代码的临界段来同步多个线程。互斥锁还可以保护单线程代码。NSMapTable，这里大家可以先理解为一个高级的NSDictionary，这里就不展开叙述了，文后会有详细介绍的链接。</li>
+<li>在构造函数- (instancetype)initWithObserver:(nullable id)observer retainObserved:(BOOL)retainObserved中<ul>
+<li>首先将传入的observer进行weak持有，这主要为了避免Retain Cycle。</li>
+<li>初始化keyOptions。这一段的内容可能大家不太熟悉，NSPointerFunctionsOptions简单来     说就是定义NSMapTable中的key和value采用何种内存管理策略，包括strong强引用，weak弱引用以及copy（要支持NSCopying协议）</li>
+<li>pthread_mutex_init(&amp;_lock, NULL)，初始化互斥锁</li>
+</ul>
+</li>
+</ol>
+<h3 id="添加observe"><a href="#添加observe" class="headerlink" title="添加observe"></a>添加observe</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">- (void)observe:(nullable id)object keyPath:(NSString *)keyPath options:(NSKeyValueObservingOptions)options block:(FBKVONotificationBlock)block</div><div class="line">&#123;</div><div class="line">  NSAssert(0 != keyPath.length &amp;&amp; NULL != block, @&quot;missing required parameters observe:%@ keyPath:%@ block:%p&quot;, object, keyPath, block);</div><div class="line">  if (nil == object || 0 == keyPath.length || NULL == block) &#123;</div><div class="line">    return;</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  // create info</div><div class="line">  _FBKVOInfo *info = [[_FBKVOInfo alloc] initWithController:self keyPath:keyPath options:options block:block];</div><div class="line"></div><div class="line">  // observe object with info</div><div class="line">  [self _observe:object info:info];</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<ol>
+<li>对于传入的参数，构建一个内部的FBKVOInfo数据结构</li>
+<li>调用[self _observe:object info:info];</li>
+</ol>
+<h4 id="接下来，我们来跟踪一下-self-observe-object-info-info-，内容如下"><a href="#接下来，我们来跟踪一下-self-observe-object-info-info-，内容如下" class="headerlink" title="接下来，我们来跟踪一下[self _observe:object info:info]，内容如下"></a>接下来，我们来跟踪一下[self _observe:object info:info]，内容如下</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div></pre></td><td class="code"><pre><div class="line">- (void)_observe:(id)object info:(_FBKVOInfo *)info</div><div class="line">&#123;</div><div class="line">  // lock</div><div class="line">  pthread_mutex_lock(&amp;_lock);</div><div class="line"></div><div class="line">  NSMutableSet *infos = [_objectInfosMap objectForKey:object];</div><div class="line"></div><div class="line">  // check for info existence</div><div class="line">  _FBKVOInfo *existingInfo = [infos member:info];</div><div class="line">  if (nil != existingInfo) &#123;</div><div class="line">    // observation info already exists; do not observe it again</div><div class="line"></div><div class="line">    // unlock and return</div><div class="line">    pthread_mutex_unlock(&amp;_lock);</div><div class="line">    return;</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  // lazilly create set of infos</div><div class="line">  if (nil == infos) &#123;</div><div class="line">    infos = [NSMutableSet set];</div><div class="line">    [_objectInfosMap setObject:infos forKey:object];</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  // add info and oberve</div><div class="line">  [infos addObject:info];</div><div class="line"></div><div class="line">  // unlock prior to callout</div><div class="line">  pthread_mutex_unlock(&amp;_lock);</div><div class="line"></div><div class="line">  [[_FBKVOSharedController sharedController] observe:object info:info];</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<ol>
+<li><p>根据被观察的object获取其对应的infos set。这个主要作用在于避免多次对同一个keyPath添加多次观察。因为每调用一次addObserverForKeyPath就要有一个对应的removeObserverForKey。</p>
+</li>
+<li><p>从infos set判断是不是已经有了与此次info相同的观察。</p>
+</li>
+<li><p>如果以上都顺利通过，将观察的信息及关系注册到_FBKVOSharedController中。</p>
+</li>
+</ol>
+<p>unObserve相关的任务逻辑大同小异，不再赘述。</p>
+<h3 id="FBKVOSharedController的作用"><a href="#FBKVOSharedController的作用" class="headerlink" title="FBKVOSharedController的作用"></a>FBKVOSharedController的作用</h3><p>上述代码中有一个比较有意识的地方，[[_FBKVOSharedController sharedController] observe:object info:info];有一个单例类<br>_FBKVOSharedController。<br>将所有的观察信息统一交由一个FBKVOSharedController的单例进行维护。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">+ (instancetype)sharedController</div><div class="line">&#123;</div><div class="line">  static _FBKVOSharedController *_controller = nil;</div><div class="line">  static dispatch_once_t onceToken;</div><div class="line">  dispatch_once(&amp;onceToken, ^&#123;</div><div class="line">    _controller = [[_FBKVOSharedController alloc] init];</div><div class="line">  &#125;);</div><div class="line">  return _controller;</div><div class="line">&#125;</div><div class="line"></div><div class="line">- (instancetype)init</div><div class="line">&#123;</div><div class="line">  self = [super init];</div><div class="line">  if (nil != self) &#123;</div><div class="line">    NSHashTable *infos = [NSHashTable alloc];</div><div class="line">#ifdef __IPHONE_OS_VERSION_MIN_REQUIRED</div><div class="line">    _infos = [infos initWithOptions:NSPointerFunctionsWeakMemory|NSPointerFunctionsObjectPointerPersonality capacity:0];</div><div class="line">#elif defined(__MAC_OS_X_VERSION_MIN_REQUIRED)</div><div class="line">    if ([NSHashTable respondsToSelector:@selector(weakObjectsHashTable)]) &#123;</div><div class="line">      _infos = [infos initWithOptions:NSPointerFunctionsWeakMemory|NSPointerFunctionsObjectPointerPersonality capacity:0];</div><div class="line">    &#125; else &#123;</div><div class="line">      // silence deprecated warnings</div><div class="line">#pragma clang diagnostic push</div><div class="line">#pragma clang diagnostic ignored &quot;-Wdeprecated-declarations&quot;</div><div class="line">      _infos = [infos initWithOptions:NSPointerFunctionsZeroingWeakMemory|NSPointerFunctionsObjectPointerPersonality capacity:0];</div><div class="line">#pragma clang diagnostic pop</div><div class="line">    &#125;</div><div class="line"></div><div class="line">#endif</div><div class="line">    pthread_mutex_init(&amp;_mutex, NULL);</div><div class="line">  &#125;</div><div class="line">  return self;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<ol>
+<li>在单例的初始化方法中有一个NSHashTable，同NSMapTable一样，可能大家接触不是很多，我在后文会详细介绍，这里大家可以先理解为一个高级的NSSet。</li>
+<li>NSPointerFunctionsZeroingWeakMemory简单来说就是定义NSHashTable中的元素采用何种内存管理策略</li>
+</ol>
+<p>于是，通过如下方法，我们像使用注册表一样将对KVOInfo注册。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line">- (void)observe:(id)object info:(nullable _FBKVOInfo *)info</div><div class="line">&#123;</div><div class="line">  if (nil == info) &#123;</div><div class="line">    return;</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  // register info</div><div class="line">  pthread_mutex_lock(&amp;_mutex);</div><div class="line">  [_infos addObject:info];</div><div class="line">  pthread_mutex_unlock(&amp;_mutex);</div><div class="line"></div><div class="line">  // add observer</div><div class="line">  [object addObserver:self forKeyPath:info-&gt;_keyPath options:info-&gt;_options context:(void *)info];</div><div class="line"></div><div class="line">  if (info-&gt;_state == _FBKVOInfoStateInitial) &#123;</div><div class="line">    info-&gt;_state = _FBKVOInfoStateObserving;</div><div class="line">  &#125; else if (info-&gt;_state == _FBKVOInfoStateNotObserving) &#123;</div><div class="line">    // this could happen when `NSKeyValueObservingOptionInitial` is one of the NSKeyValueObservingOptions,</div><div class="line">    // and the observer is unregistered within the callback block.</div><div class="line">    // at this time the object has been registered as an observer (in Foundation KVO),</div><div class="line">    // so we can safely unobserve it.</div><div class="line">    [object removeObserver:self forKeyPath:info-&gt;_keyPath context:(void *)info];</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<ol>
+<li>代表所有的观察信息都首先由FBKVOSharedController进行接受，随后进行转发。</li>
+<li>对应的添加代码 有一个 移除代码，设计的相当细心啊</li>
+</ol>
+<h3 id="实现observeValueForKeyPath-ofObject-Change-context来接收通知。"><a href="#实现observeValueForKeyPath-ofObject-Change-context来接收通知。" class="headerlink" title="实现observeValueForKeyPath:ofObject:Change:context来接收通知。"></a>实现observeValueForKeyPath:ofObject:Change:context来接收通知。</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div></pre></td><td class="code"><pre><div class="line">- (void)observeValueForKeyPath:(nullable NSString *)keyPath</div><div class="line">                      ofObject:(nullable id)object</div><div class="line">                        change:(nullable NSDictionary&lt;NSString *, id&gt; *)change</div><div class="line">                       context:(nullable void *)context</div><div class="line">&#123;</div><div class="line">  NSAssert(context, @&quot;missing context keyPath:%@ object:%@ change:%@&quot;, keyPath, object, change);</div><div class="line"></div><div class="line">  _FBKVOInfo *info;</div><div class="line"></div><div class="line">  &#123;</div><div class="line">    // lookup context in registered infos, taking out a strong reference only if it exists</div><div class="line">    pthread_mutex_lock(&amp;_mutex);</div><div class="line">    info = [_infos member:(__bridge id)context];</div><div class="line">    pthread_mutex_unlock(&amp;_mutex);</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  if (nil != info) &#123;</div><div class="line"></div><div class="line">    // take strong reference to controller</div><div class="line">    FBKVOController *controller = info-&gt;_controller;</div><div class="line">    if (nil != controller) &#123;</div><div class="line"></div><div class="line">      // take strong reference to observer</div><div class="line">      id observer = controller.observer;</div><div class="line">      if (nil != observer) &#123;</div><div class="line"></div><div class="line">        // dispatch custom block or action, fall back to default action</div><div class="line">        if (info-&gt;_block) &#123;</div><div class="line">          NSDictionary&lt;NSString *, id&gt; *changeWithKeyPath = change;</div><div class="line">          // add the keyPath to the change dictionary for clarity when mulitple keyPaths are being observed</div><div class="line">          if (keyPath) &#123;</div><div class="line">            NSMutableDictionary&lt;NSString *, id&gt; *mChange = [NSMutableDictionary dictionaryWithObject:keyPath forKey:FBKVONotificationKeyPathKey];</div><div class="line">            [mChange addEntriesFromDictionary:change];</div><div class="line">            changeWithKeyPath = [mChange copy];</div><div class="line">          &#125;</div><div class="line">          info-&gt;_block(observer, object, changeWithKeyPath);</div><div class="line">        &#125; else if (info-&gt;_action) &#123;</div><div class="line">pragma clang diagnostic push</div><div class="line">pragma clang diagnostic ignored &quot;-Warc-performSelector-leaks&quot;</div><div class="line">          [observer performSelector:info-&gt;_action withObject:change withObject:object];</div><div class="line">pragma clang diagnostic pop</div><div class="line">        &#125; else &#123;</div><div class="line">          [observer observeValueForKeyPath:keyPath ofObject:object change:change context:info-&gt;_context];</div><div class="line">        &#125;</div><div class="line">      &#125;</div><div class="line"></div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<ol>
+<li>根据context上下文获取对应的KVOInfo</li>
+<li>判断当前info的observer和controller，是否仍然存在（因为之前我们采用的weak持有）</li>
+<li>根据 info的block或者selector或者overwrite进行消息转发。</li>
+</ol>
+<p>FBKVOController整体的实现就介绍完了.FBKVOController给我的感觉是，局部有写代码我也会自己实现，但是作为一个整体，真心觉得还是一个字：服！</p>
+<h2 id="填前面提到的坑"><a href="#填前面提到的坑" class="headerlink" title="填前面提到的坑"></a>填前面提到的坑</h2><h3 id="自释放"><a href="#自释放" class="headerlink" title="自释放"></a>自释放</h3><p>何为“自释放”？可以简单的理解为对象在生命周期结束后自动清理回收所有与其相关的资源或链接，这个清理不仅仅包括对象内存的回收，还包括对象解耦以及附属事件的清理等，比如定时器的自我停止、KVO对象的监听移除等。<br>那么，FBKVOController是如何做到自释放的？可以归纳为四个字——动态属性。其为观察者绑定动态属性self.KVOController，动态绑定的KVOController会随着观察者的释放而释放，KVOController在自己的dealloc函数中移除KVO监听，巧妙的将观察者的remove转移到其动态属性的dealloc函数中。</p>
+<p>但是其还是有一定的局限性——对象无法监听自己的属性，如果你的代码是这样的</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">[self.KVOController observe:self keyPath:@&quot;date&quot; options:NSKeyValueObservingOptionNew block:^(NSDictionary *change) &#123;</div><div class="line">    // to do</div><div class="line">&#125;];</div></pre></td></tr></table></figure>
+<p>很遗憾，循环引用的问题又出现，因为FBKVOController中的NSMapTable对象会retain key对象，具体代码如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">[_objectInfosMap setObject:infos forKey:object];</div></pre></td></tr></table></figure>
+<h3 id="NSHash​Table-amp-NSMap​Table"><a href="#NSHash​Table-amp-NSMap​Table" class="headerlink" title="NSHash​Table &amp; NSMap​Table"></a>NSHash​Table &amp; NSMap​Table</h3><p>有一篇文章讲的不错，直接贴链接吧<br><a href="http://nshipster.cn/nshashtable-and-nsmaptable/" target="_blank" rel="external">NSHash​Table &amp; NSMap​Table</a>,感谢原作者的贡献。后续有时间的话，我也会开一篇单独讲一讲。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>FBKVOController对于喜好使用kvo的工程师来说，是一个好的，精简的开发框架。源码优雅，可读性高，利于自己维护。</p>
+<p>优点如下：</p>
+<ol>
+<li>提供了干净的block的回调，避免了处理这个函数的逻辑散落的到处都是。</li>
+<li>不用担心remove问题，不用再在dealloc中写remove代码。当然，如果你需要在其他时机进行remove observer,你大可放心的remove，不会出现因为没有添加而crash的问题。</li>
+</ol>
+<p>缺点：</p>
+<ol>
+<li>对象无法监听自己的属性，否则会出现循环引用。但是这个case 很少见吧？哈哈~~~</li>
+</ol>
+<p>以上！</p>
+<p><strong>原创文章，版权所有，转载请注明出处</strong></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Objective-C/" rel="tag">#Objective-C</a>
+          
+            <a href="/tags/iOS/" rel="tag">#iOS</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/10/27/为媳妇儿写VBA/" rel="next" title="为媳妇儿写了段VBA">
+                <i class="fa fa-chevron-left"></i> 为媳妇儿写了段VBA
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2016/11/02/FBKVOController源码分析/"
+           data-title="FBKVOController源码分析" data-url="http://yoursite.com/2016/11/02/FBKVOController源码分析/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.jpeg"
+               alt="yitu" />
+          <p class="site-author-name" itemprop="name">yitu</p>
+          <p class="site-description motion-element" itemprop="description">software R&D</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">6</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">5</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/yituwangpeng" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#PS：-此文为搬运篇-—逐渐将之前自己在其它地方写的文章搬运到这个博客上。"><span class="nav-number">1.</span> <span class="nav-text">PS：(此文为搬运篇)—逐渐将之前自己在其它地方写的文章搬运到这个博客上。</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#背景"><span class="nav-number"></span> <span class="nav-text">背景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#FBKVOController"><span class="nav-number"></span> <span class="nav-text">FBKVOController</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#先看用法，再看源码"><span class="nav-number"></span> <span class="nav-text">先看用法，再看源码</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#源码之旅"><span class="nav-number"></span> <span class="nav-text">源码之旅</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#FBKVOController初始化"><span class="nav-number"></span> <span class="nav-text">FBKVOController初始化</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#添加observe"><span class="nav-number"></span> <span class="nav-text">添加observe</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#接下来，我们来跟踪一下-self-observe-object-info-info-，内容如下"><span class="nav-number">1.</span> <span class="nav-text">接下来，我们来跟踪一下[self _observe:object info:info]，内容如下</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#FBKVOSharedController的作用"><span class="nav-number"></span> <span class="nav-text">FBKVOSharedController的作用</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#实现observeValueForKeyPath-ofObject-Change-context来接收通知。"><span class="nav-number"></span> <span class="nav-text">实现observeValueForKeyPath:ofObject:Change:context来接收通知。</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#填前面提到的坑"><span class="nav-number"></span> <span class="nav-text">填前面提到的坑</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#自释放"><span class="nav-number"></span> <span class="nav-text">自释放</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#NSHash​Table-amp-NSMap​Table"><span class="nav-number"></span> <span class="nav-text">NSHash​Table & NSMap​Table</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number"></span> <span class="nav-text">总结</span></a></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">yitu</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"yitupeng"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

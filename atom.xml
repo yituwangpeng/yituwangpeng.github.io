@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://yoursite.com/"/>
-  <updated>2016-11-01T08:20:14.000Z</updated>
+  <updated>2016-11-02T03:52:59.000Z</updated>
   <id>http://yoursite.com/</id>
   
   <author>
@@ -16,11 +16,117 @@
   <generator uri="http://hexo.io/">Hexo</generator>
   
   <entry>
+    <title>FBKVOController源码分析</title>
+    <link href="http://yoursite.com/2016/11/02/FBKVOController%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"/>
+    <id>http://yoursite.com/2016/11/02/FBKVOController源码分析/</id>
+    <published>2016-11-02T02:43:32.000Z</published>
+    <updated>2016-11-02T03:52:59.000Z</updated>
+    
+    <content type="html"><![CDATA[<h4 id="PS：-此文为搬运篇-—逐渐将之前自己在其它地方写的文章搬运到这个博客上。"><a href="#PS：-此文为搬运篇-—逐渐将之前自己在其它地方写的文章搬运到这个博客上。" class="headerlink" title="PS：(此文为搬运篇)—逐渐将之前自己在其它地方写的文章搬运到这个博客上。"></a><code>PS：(此文为搬运篇)—逐渐将之前自己在其它地方写的文章搬运到这个博客上。</code></h4><h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>Key-Value Observing ，通过在特定对象之间监听一个特定的 keypath 的改变进行事件内省。例如：一个 ProgressView 可以观察 网络请求的 numberOfBytesRead 来更新它自己的 progress 属性。</p>
+<p>这个方案已经被明确定义，获得框架级支持，可以方便地采用。开发人员不需要添加任何代码，不需要设计自己的观察者模型，直接可以在工程里使用。其次，KVO的架构非常的强大，可以很容易的支持多个观察者观察同一个属性，以及相关的值。</p>
+<p>但是：<br>Apple原生KVO也有一些显而易见的缺点。</p>
+<ol>
+<li>添加和移除观察者要配对出现。移除一个未添加的观察者，程序会crash；重复添加观察者会造成回调方法多次调用，给程序造成逻辑上的混乱。</li>
+<li>添加观察者，移除观察者，通知回调，三块儿代码过于分散。</li>
+</ol>
+<p>那么，有没有改良版的KVO呢？Facebook出品的FBKVOController是同类中我觉得最好用，且源码简单，设计感好。</p>
+<p>ps:有人估计会提到ReactiveCocoa，我个人并不建议在项目中使用这么庞大一个类库，学习成本太大，很不利于开展团队协作以及后期维护。（个人之见，不同意的可以忽略）<br><a id="more"></a></p>
+<h2 id="FBKVOController"><a href="#FBKVOController" class="headerlink" title="FBKVOController"></a>FBKVOController</h2><p>简单来说，FBKVOController是对KVO机制的一层封装，同时提供了线程安全的特性和并对如下这个臭名昭著的函数进行了封装，提供了干净的block的回调，避免了处理这个函数的逻辑散落的到处都是。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context</div></pre></td></tr></table></figure>
+<h3 id="先看用法，再看源码"><a href="#先看用法，再看源码" class="headerlink" title="先看用法，再看源码"></a>先看用法，再看源码</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">// create KVO controller with observer</div><div class="line">FBKVOController *KVOController = [FBKVOController controllerWithObserver:self];</div><div class="line">self.KVOController = KVOController;</div><div class="line"></div><div class="line">// observe clock date property</div><div class="line">[self.KVOController observe:clock keyPath:@&quot;date&quot; options:NSKeyValueObservingOptionInitial|NSKeyValueObservingOptionNew block:^(ClockView *clockView, Clock *clock, NSDictionary *change) &#123;</div><div class="line"></div><div class="line">  // update clock view with new value</div><div class="line">  clockView.date = change[NSKeyValueChangeNewKey];</div><div class="line">&#125;];</div></pre></td></tr></table></figure>
+<p>使用非常简单，提供了block回调。而且，并不需要考虑remove observer的事情。FBKVOController实现了“自释放”。关于“自释放”的概念会在文后予以详细解释。</p>
+<p>下面就让我们进入到源码中，按照代码执行顺序进行梳理拆分，化整为零进行分析。</p>
+<h2 id="源码之旅"><a href="#源码之旅" class="headerlink" title="源码之旅"></a>源码之旅</h2><h3 id="FBKVOController初始化"><a href="#FBKVOController初始化" class="headerlink" title="FBKVOController初始化"></a>FBKVOController初始化</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div></pre></td><td class="code"><pre><div class="line">@implementation FBKVOController</div><div class="line">&#123;</div><div class="line">  NSMapTable&lt;id, NSMutableSet&lt;_FBKVOInfo *&gt; *&gt; *_objectInfosMap;</div><div class="line">  pthread_mutex_t _lock;</div><div class="line">&#125;</div><div class="line"></div><div class="line"></div><div class="line">+ (instancetype)controllerWithObserver:(nullable id)observer</div><div class="line">&#123;</div><div class="line">  return [[self alloc] initWithObserver:observer];</div><div class="line">&#125;</div><div class="line"></div><div class="line">- (instancetype)initWithObserver:(nullable id)observer retainObserved:(BOOL)retainObserved</div><div class="line">&#123;</div><div class="line">  self = [super init];</div><div class="line">  if (nil != self) &#123;</div><div class="line">    _observer = observer;</div><div class="line">    NSPointerFunctionsOptions keyOptions = retainObserved ? NSPointerFunctionsStrongMemory|NSPointerFunctionsObjectPointerPersonality : NSPointerFunctionsWeakMemory|NSPointerFunctionsObjectPointerPersonality;</div><div class="line">    _objectInfosMap = [[NSMapTable alloc] initWithKeyOptions:keyOptions valueOptions:NSPointerFunctionsStrongMemory|NSPointerFunctionsObjectPersonality capacity:0];</div><div class="line">    pthread_mutex_init(&amp;_lock, NULL);</div><div class="line">  &#125;</div><div class="line">  return self;</div><div class="line">&#125;</div><div class="line"></div><div class="line">- (instancetype)initWithObserver:(nullable id)observer</div><div class="line">&#123;</div><div class="line">  return [self initWithObserver:observer retainObserved:YES];</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<ol>
+<li>首先我们可以看到，这个对象持有一个pthread_mutex_t及一个NSMapTable变量。这两个类型可能大家会有点不太熟悉。pthread_mutex_t是互斥锁，互斥锁通过确保一次只有一个线程执行代码的临界段来同步多个线程。互斥锁还可以保护单线程代码。NSMapTable，这里大家可以先理解为一个高级的NSDictionary，这里就不展开叙述了，文后会有详细介绍的链接。</li>
+<li>在构造函数- (instancetype)initWithObserver:(nullable id)observer retainObserved:(BOOL)retainObserved中<ul>
+<li>首先将传入的observer进行weak持有，这主要为了避免Retain Cycle。</li>
+<li>初始化keyOptions。这一段的内容可能大家不太熟悉，NSPointerFunctionsOptions简单来     说就是定义NSMapTable中的key和value采用何种内存管理策略，包括strong强引用，weak弱引用以及copy（要支持NSCopying协议）</li>
+<li>pthread_mutex_init(&amp;_lock, NULL)，初始化互斥锁</li>
+</ul>
+</li>
+</ol>
+<h3 id="添加observe"><a href="#添加observe" class="headerlink" title="添加observe"></a>添加observe</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">- (void)observe:(nullable id)object keyPath:(NSString *)keyPath options:(NSKeyValueObservingOptions)options block:(FBKVONotificationBlock)block</div><div class="line">&#123;</div><div class="line">  NSAssert(0 != keyPath.length &amp;&amp; NULL != block, @&quot;missing required parameters observe:%@ keyPath:%@ block:%p&quot;, object, keyPath, block);</div><div class="line">  if (nil == object || 0 == keyPath.length || NULL == block) &#123;</div><div class="line">    return;</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  // create info</div><div class="line">  _FBKVOInfo *info = [[_FBKVOInfo alloc] initWithController:self keyPath:keyPath options:options block:block];</div><div class="line"></div><div class="line">  // observe object with info</div><div class="line">  [self _observe:object info:info];</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<ol>
+<li>对于传入的参数，构建一个内部的FBKVOInfo数据结构</li>
+<li>调用[self _observe:object info:info];</li>
+</ol>
+<h4 id="接下来，我们来跟踪一下-self-observe-object-info-info-，内容如下"><a href="#接下来，我们来跟踪一下-self-observe-object-info-info-，内容如下" class="headerlink" title="接下来，我们来跟踪一下[self _observe:object info:info]，内容如下"></a>接下来，我们来跟踪一下[self _observe:object info:info]，内容如下</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div></pre></td><td class="code"><pre><div class="line">- (void)_observe:(id)object info:(_FBKVOInfo *)info</div><div class="line">&#123;</div><div class="line">  // lock</div><div class="line">  pthread_mutex_lock(&amp;_lock);</div><div class="line"></div><div class="line">  NSMutableSet *infos = [_objectInfosMap objectForKey:object];</div><div class="line"></div><div class="line">  // check for info existence</div><div class="line">  _FBKVOInfo *existingInfo = [infos member:info];</div><div class="line">  if (nil != existingInfo) &#123;</div><div class="line">    // observation info already exists; do not observe it again</div><div class="line"></div><div class="line">    // unlock and return</div><div class="line">    pthread_mutex_unlock(&amp;_lock);</div><div class="line">    return;</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  // lazilly create set of infos</div><div class="line">  if (nil == infos) &#123;</div><div class="line">    infos = [NSMutableSet set];</div><div class="line">    [_objectInfosMap setObject:infos forKey:object];</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  // add info and oberve</div><div class="line">  [infos addObject:info];</div><div class="line"></div><div class="line">  // unlock prior to callout</div><div class="line">  pthread_mutex_unlock(&amp;_lock);</div><div class="line"></div><div class="line">  [[_FBKVOSharedController sharedController] observe:object info:info];</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<ol>
+<li><p>根据被观察的object获取其对应的infos set。这个主要作用在于避免多次对同一个keyPath添加多次观察。因为每调用一次addObserverForKeyPath就要有一个对应的removeObserverForKey。</p>
+</li>
+<li><p>从infos set判断是不是已经有了与此次info相同的观察。</p>
+</li>
+<li><p>如果以上都顺利通过，将观察的信息及关系注册到_FBKVOSharedController中。</p>
+</li>
+</ol>
+<p>unObserve相关的任务逻辑大同小异，不再赘述。</p>
+<h3 id="FBKVOSharedController的作用"><a href="#FBKVOSharedController的作用" class="headerlink" title="FBKVOSharedController的作用"></a>FBKVOSharedController的作用</h3><p>上述代码中有一个比较有意识的地方，[[_FBKVOSharedController sharedController] observe:object info:info];有一个单例类<br>_FBKVOSharedController。<br>将所有的观察信息统一交由一个FBKVOSharedController的单例进行维护。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">+ (instancetype)sharedController</div><div class="line">&#123;</div><div class="line">  static _FBKVOSharedController *_controller = nil;</div><div class="line">  static dispatch_once_t onceToken;</div><div class="line">  dispatch_once(&amp;onceToken, ^&#123;</div><div class="line">    _controller = [[_FBKVOSharedController alloc] init];</div><div class="line">  &#125;);</div><div class="line">  return _controller;</div><div class="line">&#125;</div><div class="line"></div><div class="line">- (instancetype)init</div><div class="line">&#123;</div><div class="line">  self = [super init];</div><div class="line">  if (nil != self) &#123;</div><div class="line">    NSHashTable *infos = [NSHashTable alloc];</div><div class="line">#ifdef __IPHONE_OS_VERSION_MIN_REQUIRED</div><div class="line">    _infos = [infos initWithOptions:NSPointerFunctionsWeakMemory|NSPointerFunctionsObjectPointerPersonality capacity:0];</div><div class="line">#elif defined(__MAC_OS_X_VERSION_MIN_REQUIRED)</div><div class="line">    if ([NSHashTable respondsToSelector:@selector(weakObjectsHashTable)]) &#123;</div><div class="line">      _infos = [infos initWithOptions:NSPointerFunctionsWeakMemory|NSPointerFunctionsObjectPointerPersonality capacity:0];</div><div class="line">    &#125; else &#123;</div><div class="line">      // silence deprecated warnings</div><div class="line">#pragma clang diagnostic push</div><div class="line">#pragma clang diagnostic ignored &quot;-Wdeprecated-declarations&quot;</div><div class="line">      _infos = [infos initWithOptions:NSPointerFunctionsZeroingWeakMemory|NSPointerFunctionsObjectPointerPersonality capacity:0];</div><div class="line">#pragma clang diagnostic pop</div><div class="line">    &#125;</div><div class="line"></div><div class="line">#endif</div><div class="line">    pthread_mutex_init(&amp;_mutex, NULL);</div><div class="line">  &#125;</div><div class="line">  return self;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<ol>
+<li>在单例的初始化方法中有一个NSHashTable，同NSMapTable一样，可能大家接触不是很多，我在后文会详细介绍，这里大家可以先理解为一个高级的NSSet。</li>
+<li>NSPointerFunctionsZeroingWeakMemory简单来说就是定义NSHashTable中的元素采用何种内存管理策略</li>
+</ol>
+<p>于是，通过如下方法，我们像使用注册表一样将对KVOInfo注册。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line">- (void)observe:(id)object info:(nullable _FBKVOInfo *)info</div><div class="line">&#123;</div><div class="line">  if (nil == info) &#123;</div><div class="line">    return;</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  // register info</div><div class="line">  pthread_mutex_lock(&amp;_mutex);</div><div class="line">  [_infos addObject:info];</div><div class="line">  pthread_mutex_unlock(&amp;_mutex);</div><div class="line"></div><div class="line">  // add observer</div><div class="line">  [object addObserver:self forKeyPath:info-&gt;_keyPath options:info-&gt;_options context:(void *)info];</div><div class="line"></div><div class="line">  if (info-&gt;_state == _FBKVOInfoStateInitial) &#123;</div><div class="line">    info-&gt;_state = _FBKVOInfoStateObserving;</div><div class="line">  &#125; else if (info-&gt;_state == _FBKVOInfoStateNotObserving) &#123;</div><div class="line">    // this could happen when `NSKeyValueObservingOptionInitial` is one of the NSKeyValueObservingOptions,</div><div class="line">    // and the observer is unregistered within the callback block.</div><div class="line">    // at this time the object has been registered as an observer (in Foundation KVO),</div><div class="line">    // so we can safely unobserve it.</div><div class="line">    [object removeObserver:self forKeyPath:info-&gt;_keyPath context:(void *)info];</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<ol>
+<li>代表所有的观察信息都首先由FBKVOSharedController进行接受，随后进行转发。</li>
+<li>对应的添加代码 有一个 移除代码，设计的相当细心啊</li>
+</ol>
+<h3 id="实现observeValueForKeyPath-ofObject-Change-context来接收通知。"><a href="#实现observeValueForKeyPath-ofObject-Change-context来接收通知。" class="headerlink" title="实现observeValueForKeyPath:ofObject:Change:context来接收通知。"></a>实现observeValueForKeyPath:ofObject:Change:context来接收通知。</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div></pre></td><td class="code"><pre><div class="line">- (void)observeValueForKeyPath:(nullable NSString *)keyPath</div><div class="line">                      ofObject:(nullable id)object</div><div class="line">                        change:(nullable NSDictionary&lt;NSString *, id&gt; *)change</div><div class="line">                       context:(nullable void *)context</div><div class="line">&#123;</div><div class="line">  NSAssert(context, @&quot;missing context keyPath:%@ object:%@ change:%@&quot;, keyPath, object, change);</div><div class="line"></div><div class="line">  _FBKVOInfo *info;</div><div class="line"></div><div class="line">  &#123;</div><div class="line">    // lookup context in registered infos, taking out a strong reference only if it exists</div><div class="line">    pthread_mutex_lock(&amp;_mutex);</div><div class="line">    info = [_infos member:(__bridge id)context];</div><div class="line">    pthread_mutex_unlock(&amp;_mutex);</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  if (nil != info) &#123;</div><div class="line"></div><div class="line">    // take strong reference to controller</div><div class="line">    FBKVOController *controller = info-&gt;_controller;</div><div class="line">    if (nil != controller) &#123;</div><div class="line"></div><div class="line">      // take strong reference to observer</div><div class="line">      id observer = controller.observer;</div><div class="line">      if (nil != observer) &#123;</div><div class="line"></div><div class="line">        // dispatch custom block or action, fall back to default action</div><div class="line">        if (info-&gt;_block) &#123;</div><div class="line">          NSDictionary&lt;NSString *, id&gt; *changeWithKeyPath = change;</div><div class="line">          // add the keyPath to the change dictionary for clarity when mulitple keyPaths are being observed</div><div class="line">          if (keyPath) &#123;</div><div class="line">            NSMutableDictionary&lt;NSString *, id&gt; *mChange = [NSMutableDictionary dictionaryWithObject:keyPath forKey:FBKVONotificationKeyPathKey];</div><div class="line">            [mChange addEntriesFromDictionary:change];</div><div class="line">            changeWithKeyPath = [mChange copy];</div><div class="line">          &#125;</div><div class="line">          info-&gt;_block(observer, object, changeWithKeyPath);</div><div class="line">        &#125; else if (info-&gt;_action) &#123;</div><div class="line">pragma clang diagnostic push</div><div class="line">pragma clang diagnostic ignored &quot;-Warc-performSelector-leaks&quot;</div><div class="line">          [observer performSelector:info-&gt;_action withObject:change withObject:object];</div><div class="line">pragma clang diagnostic pop</div><div class="line">        &#125; else &#123;</div><div class="line">          [observer observeValueForKeyPath:keyPath ofObject:object change:change context:info-&gt;_context];</div><div class="line">        &#125;</div><div class="line">      &#125;</div><div class="line"></div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<ol>
+<li>根据context上下文获取对应的KVOInfo</li>
+<li>判断当前info的observer和controller，是否仍然存在（因为之前我们采用的weak持有）</li>
+<li>根据 info的block或者selector或者overwrite进行消息转发。</li>
+</ol>
+<p>FBKVOController整体的实现就介绍完了.FBKVOController给我的感觉是，局部有写代码我也会自己实现，但是作为一个整体，真心觉得还是一个字：服！</p>
+<h2 id="填前面提到的坑"><a href="#填前面提到的坑" class="headerlink" title="填前面提到的坑"></a>填前面提到的坑</h2><h3 id="自释放"><a href="#自释放" class="headerlink" title="自释放"></a>自释放</h3><p>何为“自释放”？可以简单的理解为对象在生命周期结束后自动清理回收所有与其相关的资源或链接，这个清理不仅仅包括对象内存的回收，还包括对象解耦以及附属事件的清理等，比如定时器的自我停止、KVO对象的监听移除等。<br>那么，FBKVOController是如何做到自释放的？可以归纳为四个字——动态属性。其为观察者绑定动态属性self.KVOController，动态绑定的KVOController会随着观察者的释放而释放，KVOController在自己的dealloc函数中移除KVO监听，巧妙的将观察者的remove转移到其动态属性的dealloc函数中。</p>
+<p>但是其还是有一定的局限性——对象无法监听自己的属性，如果你的代码是这样的</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">[self.KVOController observe:self keyPath:@&quot;date&quot; options:NSKeyValueObservingOptionNew block:^(NSDictionary *change) &#123;</div><div class="line">    // to do</div><div class="line">&#125;];</div></pre></td></tr></table></figure>
+<p>很遗憾，循环引用的问题又出现，因为FBKVOController中的NSMapTable对象会retain key对象，具体代码如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">[_objectInfosMap setObject:infos forKey:object];</div></pre></td></tr></table></figure>
+<h3 id="NSHash​Table-amp-NSMap​Table"><a href="#NSHash​Table-amp-NSMap​Table" class="headerlink" title="NSHash​Table &amp; NSMap​Table"></a>NSHash​Table &amp; NSMap​Table</h3><p>有一篇文章讲的不错，直接贴链接吧<br><a href="http://nshipster.cn/nshashtable-and-nsmaptable/" target="_blank" rel="external">NSHash​Table &amp; NSMap​Table</a>,感谢原作者的贡献。后续有时间的话，我也会开一篇单独讲一讲。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>FBKVOController对于喜好使用kvo的工程师来说，是一个好的，精简的开发框架。源码优雅，可读性高，利于自己维护。</p>
+<p>优点如下：</p>
+<ol>
+<li>提供了干净的block的回调，避免了处理这个函数的逻辑散落的到处都是。</li>
+<li>不用担心remove问题，不用再在dealloc中写remove代码。当然，如果你需要在其他时机进行remove observer,你大可放心的remove，不会出现因为没有添加而crash的问题。</li>
+</ol>
+<p>缺点：</p>
+<ol>
+<li>对象无法监听自己的属性，否则会出现循环引用。但是这个case 很少见吧？哈哈~~~</li>
+</ol>
+<p>以上！</p>
+<p><strong>原创文章，版权所有，转载请注明出处</strong></p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;h4 id=&quot;PS：-此文为搬运篇-—逐渐将之前自己在其它地方写的文章搬运到这个博客上。&quot;&gt;&lt;a href=&quot;#PS：-此文为搬运篇-—逐渐将之前自己在其它地方写的文章搬运到这个博客上。&quot; class=&quot;headerlink&quot; title=&quot;PS：(此文为搬运篇)—逐渐将之前自己在其它地方写的文章搬运到这个博客上。&quot;&gt;&lt;/a&gt;&lt;code&gt;PS：(此文为搬运篇)—逐渐将之前自己在其它地方写的文章搬运到这个博客上。&lt;/code&gt;&lt;/h4&gt;&lt;h2 id=&quot;背景&quot;&gt;&lt;a href=&quot;#背景&quot; class=&quot;headerlink&quot; title=&quot;背景&quot;&gt;&lt;/a&gt;背景&lt;/h2&gt;&lt;p&gt;Key-Value Observing ，通过在特定对象之间监听一个特定的 keypath 的改变进行事件内省。例如：一个 ProgressView 可以观察 网络请求的 numberOfBytesRead 来更新它自己的 progress 属性。&lt;/p&gt;
+&lt;p&gt;这个方案已经被明确定义，获得框架级支持，可以方便地采用。开发人员不需要添加任何代码，不需要设计自己的观察者模型，直接可以在工程里使用。其次，KVO的架构非常的强大，可以很容易的支持多个观察者观察同一个属性，以及相关的值。&lt;/p&gt;
+&lt;p&gt;但是：&lt;br&gt;Apple原生KVO也有一些显而易见的缺点。&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;添加和移除观察者要配对出现。移除一个未添加的观察者，程序会crash；重复添加观察者会造成回调方法多次调用，给程序造成逻辑上的混乱。&lt;/li&gt;
+&lt;li&gt;添加观察者，移除观察者，通知回调，三块儿代码过于分散。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;那么，有没有改良版的KVO呢？Facebook出品的FBKVOController是同类中我觉得最好用，且源码简单，设计感好。&lt;/p&gt;
+&lt;p&gt;ps:有人估计会提到ReactiveCocoa，我个人并不建议在项目中使用这么庞大一个类库，学习成本太大，很不利于开展团队协作以及后期维护。（个人之见，不同意的可以忽略）&lt;br&gt;
+    
+    </summary>
+    
+    
+      <category term="Objective-C" scheme="http://yoursite.com/tags/Objective-C/"/>
+    
+      <category term="iOS" scheme="http://yoursite.com/tags/iOS/"/>
+    
+  </entry>
+  
+  <entry>
     <title>为媳妇儿写了段VBA</title>
     <link href="http://yoursite.com/2016/10/27/%E4%B8%BA%E5%AA%B3%E5%A6%87%E5%84%BF%E5%86%99VBA/"/>
     <id>http://yoursite.com/2016/10/27/为媳妇儿写VBA/</id>
     <published>2016-10-27T09:25:16.000Z</published>
-    <updated>2016-11-01T08:20:14.000Z</updated>
+    <updated>2016-11-02T03:48:46.000Z</updated>
     
     <content type="html"><![CDATA[<h2 id="写在前面"><a href="#写在前面" class="headerlink" title="写在前面"></a>写在前面</h2><p>我家媳妇儿（以下简称领导）是做金融行业数据分析相关工作，每天都需要跟海量的Excel数据打交道。昨天，非得让我给写一个VBA程序，实现一个可以自动处理数据的Case.语气强硬：你不是“扛把子”吗，“扛把子”程序员不是什么都会写吗？呃。。。话说“扛把子”程序员这个称号如何而来。。。我竟无言以对。没办法，硬着头皮撸vba吧，不能失掉自己在领导心目中伟岸的形象~~</p>
 <h2 id="甩起膀子-干活吧"><a href="#甩起膀子-干活吧" class="headerlink" title="甩起膀子 干活吧"></a>甩起膀子 干活吧</h2><p>在kindle上搜索到一本《别怕，ExcelVBA其实很简单》，看评价挺高，下单，购买。并没有急于去看书，根据领导的业务要求，理了一下思路。需要把400多个Excel工作簿里某个工作表的所有品类的每个品类的GMV算出来，并把算出的结果–放到一个新的Excel文件中，方便领导对结果进行处理分析。</p>
@@ -32,6 +138,7 @@
 <h2 id="新技能Get"><a href="#新技能Get" class="headerlink" title="新技能Get"></a>新技能Get</h2><p>接触一门新语言，一晚上写出一个VBA小程序，解决一个特定Case。收获更多的是对学习思路和方法的反思。任何一门编程语言，纸上谈兵，纯理论的学习，见效非常慢，也是不科学的。唯有放到实际生产中，在实践中学习，方能提高学习效率。任何的学习，都理应如此。</p>
 <h2 id="写在文后"><a href="#写在文后" class="headerlink" title="写在文后"></a>写在文后</h2><p>此文仅仅是自写自看，也算是开一个深入学习VBA的口子吧。以后肯定还会结合领导的需求写出其他的小程序，代码也会存放在这里。另外在VBA程序优化和抽象上会作进一步处理，目标是能为领导的日常工作建立一套模型，实现尽可能的办公自动化。最浪漫的事莫过于此吧~~   O(∩_∩)O</p>
 <p>以上。</p>
+<p><strong>原创文章，版权所有，转载请注明出处</strong></p>
 ]]></content>
     
     <summary type="html">
@@ -55,7 +162,7 @@
     <link href="http://yoursite.com/2016/10/18/swift-Optional-%E5%BB%B6%E4%BC%B8%E5%BC%80%E6%9D%A5/"/>
     <id>http://yoursite.com/2016/10/18/swift-Optional-延伸开来/</id>
     <published>2016-10-18T07:12:08.000Z</published>
-    <updated>2016-11-01T08:22:57.000Z</updated>
+    <updated>2016-11-02T03:49:01.000Z</updated>
     
     <content type="html"><![CDATA[<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>最近有朋友咨询过多次关于swift中? ! ?? as? as! Any AnyObject这些符号到底表示什么意思，如何使用。对于初学者，在看swift代码时，对满屏的这些符号，表示很晕。借此机会，我把自己对此的理解记录于此。</p>
 <p>话说一切要先以可选类型Optional说起~~<br><a id="more"></a></p>
@@ -129,6 +236,7 @@
 </ul>
 <h3 id="TIP-以上是对容易疑惑的知识点一个简练式的梳理，并未做详细深入表述。"><a href="#TIP-以上是对容易疑惑的知识点一个简练式的梳理，并未做详细深入表述。" class="headerlink" title="TIP:以上是对容易疑惑的知识点一个简练式的梳理，并未做详细深入表述。"></a>TIP:以上是对容易疑惑的知识点一个简练式的梳理，并未做详细深入表述。</h3><h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><p><a href="https://www.gitbook.com/book/tommy60703/swift-language-traditional-chinese/details" target="_blank" rel="external">@《The Sw­ift Pr­ogramm­ing La­nguage­》正體中文版</a></p>
 <p><a href="http://swifter.tips/implicitly-optional/" target="_blank" rel="external">@隐式解包 OPTIONAL</a></p>
+<p><strong>原创文章，版权所有，转载请注明出处</strong></p>
 ]]></content>
     
     <summary type="html">
@@ -139,9 +247,9 @@
     </summary>
     
     
-      <category term="Swift" scheme="http://yoursite.com/tags/Swift/"/>
-    
       <category term="iOS" scheme="http://yoursite.com/tags/iOS/"/>
+    
+      <category term="Swift" scheme="http://yoursite.com/tags/Swift/"/>
     
   </entry>
   
@@ -166,7 +274,7 @@
     <link href="http://yoursite.com/2016/09/12/%E4%BA%B2%E8%87%AA%E6%95%B4%E7%90%86-Mac%E4%B8%8A%E6%90%AD%E5%BB%BA%E5%9F%BA%E4%BA%8EGitHub-Page%E7%9A%84Hexo%E5%8D%9A%E5%AE%A2/"/>
     <id>http://yoursite.com/2016/09/12/亲自整理-Mac上搭建基于GitHub-Page的Hexo博客/</id>
     <published>2016-09-12T09:09:10.000Z</published>
-    <updated>2016-11-01T08:22:29.000Z</updated>
+    <updated>2016-11-02T03:48:38.000Z</updated>
     
     <content type="html"><![CDATA[<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>写作，我认为是一件很有意义的事情。有一个地方，可以记录自己的所思所想，必是一件妙不可言的事情。</p>
 <p>作为一个技术男，喜欢捣腾，是一个必备的属性吧。用惯了世面上的博客平台之后，何不搭建一个独立的个人博客。目前搭建独立的个人博客有很多种方式，你可以选择购买主机搭建动态博客 - WordPress等，也可以使用Github Pages来搭建一个静态的个人博客。我选择了现在很热门的Github Pages + Hexo 的方式来搭建独立的个人博客。</p>
@@ -215,6 +323,7 @@
 <p>我使用的主题是Next <a href="http://theme-next.iissnan.com/getting-started.html" target="_blank" rel="external">传送门</a></p>
 <h2 id="五-小结"><a href="#五-小结" class="headerlink" title="五:小结"></a>五:小结</h2><p>本文简单的记录了我搭建hexo博客的过程，内容有些简单。默认前提是Github经常使用，所以对Github部分没有详细介绍。</p>
 <p>关于如何绑定自己的域名，会在下片文章中指出。</p>
+<p><strong>原创文章，版权所有，转载请注明出处</strong></p>
 ]]></content>
     
     <summary type="html">
