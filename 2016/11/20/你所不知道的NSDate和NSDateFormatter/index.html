@@ -1,0 +1,693 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="iOS,Objective-C," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="yitu's blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="背景关于NSDate和NSDateFormatter两个类相信大家也都用过，基本功能或许也都会用。但是我今天要讲一些细节问题，一些不遇到过就不会注意和发现的点。早在2013年做智能手表的时候，当时就对这两个类有过很重的使用。因为数据要标记生成数据的时间，数据同步到手机上之后，APP上显示的时间也要跟数据产生时间保持一致，这个保持一致就产生了一个时区的问题。假设用户在西八区带着智能手表产生了一些数据">
+<meta property="og:type" content="article">
+<meta property="og:title" content="你所不知道的NSDate和NSDateFormatter">
+<meta property="og:url" content="http://yoursite.com/2016/11/20/你所不知道的NSDate和NSDateFormatter/index.html">
+<meta property="og:site_name" content="yitu's blog">
+<meta property="og:description" content="背景关于NSDate和NSDateFormatter两个类相信大家也都用过，基本功能或许也都会用。但是我今天要讲一些细节问题，一些不遇到过就不会注意和发现的点。早在2013年做智能手表的时候，当时就对这两个类有过很重的使用。因为数据要标记生成数据的时间，数据同步到手机上之后，APP上显示的时间也要跟数据产生时间保持一致，这个保持一致就产生了一个时区的问题。假设用户在西八区带着智能手表产生了一些数据">
+<meta property="og:updated_time" content="2016-11-20T09:22:17.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="你所不知道的NSDate和NSDateFormatter">
+<meta name="twitter:description" content="背景关于NSDate和NSDateFormatter两个类相信大家也都用过，基本功能或许也都会用。但是我今天要讲一些细节问题，一些不遇到过就不会注意和发现的点。早在2013年做智能手表的时候，当时就对这两个类有过很重的使用。因为数据要标记生成数据的时间，数据同步到手机上之后，APP上显示的时间也要跟数据产生时间保持一致，这个保持一致就产生了一个时区的问题。假设用户在西八区带着智能手表产生了一些数据">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 6347889523870926000,
+      author: '博主大人一土'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2016/11/20/你所不知道的NSDate和NSDateFormatter/"/>
+
+  <title> 你所不知道的NSDate和NSDateFormatter | yitu's blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">yitu's blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                你所不知道的NSDate和NSDateFormatter
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-11-20T10:41:52+08:00" content="2016-11-20">
+              2016-11-20
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/11/20/你所不知道的NSDate和NSDateFormatter/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/11/20/你所不知道的NSDate和NSDateFormatter/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>关于NSDate和NSDateFormatter两个类相信大家也都用过，基本功能或许也都会用。但是我今天要讲一些细节问题，一些不遇到过就不会注意和发现的点。早在2013年做智能手表的时候，当时就对这两个类有过很重的使用。因为数据要标记生成数据的时间，数据同步到手机上之后，APP上显示的时间也要跟数据产生时间保持一致，这个保持一致就产生了一个时区的问题。假设用户在西八区带着智能手表产生了一些数据，用户回到东八区之后将数据同步到手机上，你按东八区时区将时间戳转化成时间，那么肯定是不正确的。</p>
+<p>另外，由于日期从时间戳转化成NDate，是要用到NSDateFormatter这个类的。特别是智能手表里的数据是大量的，比如步数数据，一个小时的步数数据按2秒钟走一步算得话，一小时就会有3600/2 = 1800条数据。这1800数据在APP中展示的时候，是都要转成NSDate进行表示的，如果频繁初始化NSDateFormatter，是非常耗时的，因为NSDateFormatter对象本身初始化很慢~~~</p>
+<p>这段经历，算是积累了一些在日期计算和格式转换之间的一些经验和心得。</p>
+<p>2015年来到穷游之后，负责行程助手APP的开发工作。又跟日期打上交道了。这期间又发生了一些有趣的事情。<br><a id="more"></a></p>
+<h1 id="行程助手上遇到的日期Bug"><a href="#行程助手上遇到的日期Bug" class="headerlink" title="行程助手上遇到的日期Bug"></a>行程助手上遇到的日期Bug</h1><h2 id="行程助手是什么"><a href="#行程助手是什么" class="headerlink" title="行程助手是什么"></a>行程助手是什么</h2><p>首先安利一下行程助手。【穷游行程助手成功入围App Store”2015年度精选”。App Store官方推荐的旅行必备工具。旨在为全球旅行者提供最美妙的境内外行程规划体验。】</p>
+<h2 id="行程助手的日期处理策略"><a href="#行程助手的日期处理策略" class="headerlink" title="行程助手的日期处理策略"></a>行程助手的日期处理策略</h2><p>行程助手的用户，大多数都是要出境游的。出境，那么就意味着用户的手机时区会发生变化。为了保证用户在国内或者任何一个时区地点做行程的时候选择的行程出发时间假设是2016年10月30日，无论用户走到哪个国家，行程出发日期不会跟随时区进行变化，还是2016年10月30日。为此，我们Client端和Server端在进行日期交互的时候，统一通过2016-10-30的格式化字符串进行交互，不以传统的时间戳进行交互。</p>
+<p>APP在从服务端拿到时间数据，类似2016-10-30的时候，在根据这个格式化的字符串进行相应的转化，予以展示。</p>
+<h2 id="出现的bug"><a href="#出现的bug" class="headerlink" title="出现的bug"></a>出现的bug</h2><p>理论上，上述策略，是可以保证日期是不会有问题的。但是，不遂人愿。用户上报了一个bug，用户手机是罗马时区，他的行程开始时间是2016年10月30日，按道理来讲行程第二天应该显示2016年10月31日。可是他的第二天的行程日期还是2016年10月30日。</p>
+<h1 id="Bug分析"><a href="#Bug分析" class="headerlink" title="Bug分析"></a>Bug分析</h1><h2 id="首先尝试bug复现"><a href="#首先尝试bug复现" class="headerlink" title="首先尝试bug复现"></a>首先尝试bug复现</h2><p>经过操作发现，并不是所有时区都会有问题，也不是某个时区肯定有问题。比如罗马时区，出发日期为2016年10月30日的时候就会有问题，如果出发日期改成出发日期为2016年11月5日就没有问题。这个。。。似乎就有点奇葩了啊</p>
+<h2 id="梳理项目中日期显示流程"><a href="#梳理项目中日期显示流程" class="headerlink" title="梳理项目中日期显示流程"></a>梳理项目中日期显示流程</h2><p>上面讲到，APP从服务端拿到的行程的出发时间是2016-10-30格式的字符串，APP端经过如下转化，得出一个2016月10月30日，零时区时间的时间戳。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div></pre></td><td class="code"><pre><div class="line">//此时的[dict objectForKey:@&quot;start_time_format&quot;]即是@“2016-10-30”</div><div class="line">NSDate *startDate = [NSDate dateFromString:[dict objectForKey:@&quot;start_time_format&quot;] withFormat:@&quot;yyyy-MM-dd&quot;];</div><div class="line"></div><div class="line">object.start_time = [startDate timeIntervalSince1970];</div><div class="line"></div><div class="line">//NSDate category</div><div class="line">+ (NSDate *)dateFromString:(NSString *)string withFormat:(NSString *)format</div><div class="line">&#123;</div><div class="line">    NSDateFormatter *inputFormatter =[NSDateFormatter sharedSystemZoneDateFormatter];</div><div class="line">    [inputFormatter setDateFormat:format];</div><div class="line">    NSDate *date =[inputFormatter dateFromString:string];</div><div class="line">   </div><div class="line">   return date;</div><div class="line">&#125;</div><div class="line"></div><div class="line">//NSDateFormatter category</div><div class="line">+ (NSDateFormatter *)sharedSystemZoneDateFormatter &#123;</div><div class="line">    static NSDateFormatter *sharedDateFormatter = nil;</div><div class="line">    </div><div class="line">    static dispatch_once_t onceToken;</div><div class="line">    dispatch_once(&amp;onceToken, ^&#123;</div><div class="line">        sharedDateFormatter = [[NSDateFormatter alloc] init];</div><div class="line">        [sharedDateFormatter setTimeZone:[NSTimeZone systemTimeZone]];</div><div class="line">    &#125;);</div><div class="line">    </div><div class="line">    return sharedDateFormatter;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>上述代码中 </p>
+<p>startDate = 2016-10-29 22:00:00 +0000</p>
+<p>object.start_time = 1477778400</p>
+<p>项目中计算行程其他天的日期是依据object.start_time计算的，代码如下：那么第二天的start_time = object.start_time + 24*3600,然后再讲时间戳使用[NSDate da]</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">NSTimeInterval *start_time = object.start_time + (index - 1) * 24 * 3600;//index表示第几天</div><div class="line">NSDate *date = [NSDate dateWithTimeIntervalSince1970:start_time];</div></pre></td></tr></table></figure>
+<p>然后根据APP日期展示所要展示的日期格式，将NSDate 格式化成字符串,比如日期要显示成xxxx年xx月xx日</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line"> NSString *dateStr = [date systemZoneStringWithFormat:@&quot;yyyy年MM月dd日&quot;];</div><div class="line"> </div><div class="line"> //NSDate category</div><div class="line"> - (NSString *)systemZoneStringWithFormat:(NSString *) format</div><div class="line">&#123;</div><div class="line">    NSDateFormatter *outputFormatter =[NSDateFormatter sharedSystemZoneDateFormatter];</div><div class="line">    [outputFormatter setDateFormat:format];</div><div class="line">   </div><div class="line">    NSString *timestamp_str = [outputFormatter stringFromDate:self];</div><div class="line">    </div><div class="line">    return timestamp_str;</div><div class="line">&#125;</div><div class="line"></div><div class="line">//NSDateFormatter category</div><div class="line">+ (NSDateFormatter *)sharedSystemZoneDateFormatter &#123;</div><div class="line">    static NSDateFormatter *sharedDateFormatter = nil;</div><div class="line">    </div><div class="line">    static dispatch_once_t onceToken;</div><div class="line">    dispatch_once(&amp;onceToken, ^&#123;</div><div class="line">        sharedDateFormatter = [[NSDateFormatter alloc] init];</div><div class="line">        [sharedDateFormatter setTimeZone:[NSTimeZone systemTimeZone]];</div><div class="line">    &#125;);</div><div class="line">    </div><div class="line">    return sharedDateFormatter;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>dateStr就是我们格式化出的字符串。</p>
+<h2 id="流程中发现问题"><a href="#流程中发现问题" class="headerlink" title="流程中发现问题"></a>流程中发现问题</h2><p>在上述流程分析中，startDate = 2016-10-29 22:00:00 +0000引起了我的注意。我们都知道，罗马时区是东一区，那么@“2016年10月30日”按上述方法转化成NSDate的话应该是2016-10-29 23:00:00 +0000.差了一个小时。</p>
+<p>为什么会差一个小时呢？？？</p>
+<p>思考良久，突然脑子灵光一现，我记得之前看到过一个夏时制的问题，赶快google了一下。</p>
+<h3 id="夏时制问题"><a href="#夏时制问题" class="headerlink" title="夏时制问题"></a>夏时制问题</h3><blockquote>
+<p>夏时制，另译夏令时间（英语：Summer time），又称日光节约时制、日光节约时间（英语：Daylight saving time），是一种为节约能源而人为规定地方时间的制度，在这一制度实行期间所采用的统一时间称为“夏令时间”。一般在天亮较早的夏季人为将时间调快一小时，可以使人早起早睡，减少照明量，以充分利用光照资源，从而节约照明用电。各个采纳夏时制的国家具体规定不同。—维基百科，自由的百科全书</p>
+</blockquote>
+<p>而后，我查了一下罗马的确是实施夏时制的国家。并且它的2016年夏时制时间表为：</p>
+<p>夏令时于当地标准时间 星期日, 27 三月 2016, 02:00 开始</p>
+<p>夏令时于当地标准时间 星期日, 30 十月 2016, 03:00 结束</p>
+<p>2016年10月30日，这个“神奇”的日期再度出现。</p>
+<p>时间调快一个小时，反映在时区的影响上，就是在实行夏时制的时间段内，罗马的时区由东一区变成了东二区！！！那么一切问题都有答案了。</p>
+<h2 id="答案浮出水面"><a href="#答案浮出水面" class="headerlink" title="答案浮出水面"></a>答案浮出水面</h2><p>由上日期显示流程，可得出前行程前天日期数据如下</p>
+<table>
+<thead>
+<tr>
+<th>行程第几天</th>
+<th>日期时间戳</th>
+<th>日期</th>
+<th>格式化日期字符串</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>1477778400</td>
+<td>2016-10-29 22:00:00 +0000</td>
+<td>2016年10月30日</td>
+</tr>
+<tr>
+<td>2</td>
+<td>1477778400+24 * 3600</td>
+<td>2016-10-30 22:00:00 +0000</td>
+<td>2016年10月30日</td>
+</tr>
+<tr>
+<td>3</td>
+<td>1477778400 +2 <em> 24 </em>3600</td>
+<td>2016-10-31 22:00:00 +0000</td>
+<td>2016年10月31日</td>
+</tr>
+</tbody>
+</table>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line"> NSString *dateStr = [date systemZoneStringWithFormat:@&quot;yyyy年MM月dd日&quot;];</div><div class="line"> </div><div class="line"> //NSDate category</div><div class="line"> - (NSString *)systemZoneStringWithFormat:(NSString *)format</div><div class="line">&#123;</div><div class="line">    NSDateFormatter *outputFormatter =[NSDateFormatter sharedSystemZoneDateFormatter];</div><div class="line">    [outputFormatter setDateFormat:format];</div><div class="line">   </div><div class="line">    NSString *timestamp_str = [outputFormatter stringFromDate:self];</div><div class="line">    </div><div class="line">    return timestamp_str;</div><div class="line">&#125;</div><div class="line"></div><div class="line">//NSDateFormatter category</div><div class="line">+ (NSDateFormatter *)sharedSystemZoneDateFormatter &#123;</div><div class="line">    static NSDateFormatter *sharedDateFormatter = nil;</div><div class="line">    </div><div class="line">    static dispatch_once_t onceToken;</div><div class="line">    dispatch_once(&amp;onceToken, ^&#123;</div><div class="line">        sharedDateFormatter = [[NSDateFormatter alloc] init];</div><div class="line">        [sharedDateFormatter setTimeZone:[NSTimeZone systemTimeZone]];</div><div class="line">    &#125;);</div><div class="line">    </div><div class="line">    return sharedDateFormatter;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>使用[date systemZoneStringWithFormat:@”yyyy年MM月dd日”]方法，格式化字符串的时候，NSDateFormatter应该是考虑到夏时制的影响的。所以在2016-10-29 22:00:00 +0000格式化的时候是按照东二区时区进行格式化，格式化出的字符串结果应该是2016年10月30日 00:00;而在格式化2016-10-30 22:00:00 +0000的时候是按照东一区时区进行格式化，格式化出的字符串结果应该是2016年10月30日 23:00;</p>
+<p>由此就会出现前面用户反应的那个bug，有两个2016年10月30日。</p>
+<h2 id="如何解决"><a href="#如何解决" class="headerlink" title="如何解决"></a>如何解决</h2><p>上述流程中，在计算第几天的日期的时候，是直接加24*3600这个系数的，但是由于夏时制，时间拨快一个小时的影响，实际上这个系数是不准确的。</p>
+<p>由此，计算日期基础上添加几天的方法应该如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">/**</div><div class="line"> *  当前日期基础上添加几天(考虑是否是夏时制的问题)</div><div class="line"> *  @return 日期</div><div class="line"> */</div><div class="line"></div><div class="line">- (NSDate *)addDay:(NSInteger)day timeZone:(NSTimeZone *)timeZone &#123;</div><div class="line">    </div><div class="line">    NSTimeInterval interval =24*60*60;</div><div class="line">    NSDate *desDate = [self dateByAddingTimeInterval:day*interval];</div><div class="line">    </div><div class="line">    if (!timeZone) &#123;</div><div class="line">        return desDate;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    BOOL sourceDateIsDaylightSavingTime = [timeZone isDaylightSavingTimeForDate:self];</div><div class="line">    BOOL desDateIsDaylightSavingTime = [timeZone isDaylightSavingTimeForDate:desDate];</div><div class="line">    </div><div class="line">    if (sourceDateIsDaylightSavingTime &amp;&amp; desDateIsDaylightSavingTime) &#123;</div><div class="line">        return desDate;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    if (sourceDateIsDaylightSavingTime &amp;&amp; !desDateIsDaylightSavingTime) &#123;</div><div class="line">        desDate = [self dateByAddingTimeInterval:day*interval + 60*60];</div><div class="line">        return desDate;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    if (!sourceDateIsDaylightSavingTime &amp;&amp; desDateIsDaylightSavingTime) &#123;</div><div class="line">        desDate = [self dateByAddingTimeInterval:day*interval - 60*60];</div><div class="line">        return desDate;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    return desDate;</div><div class="line"></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这样在计算出start_date的基础上，用此API计算之后每一天的日期就好。</p>
+<h2 id="夏时制问题总结"><a href="#夏时制问题总结" class="headerlink" title="夏时制问题总结"></a>夏时制问题总结</h2><p>在做全球化的APP的时候，这个时间问题确实得考虑全面和周到。像这个夏时制的问题，也是一个坑。之前完全没有注意到。由此问题，我重新去观察系统API的时候，发现了一些有意思的地方，贴出来跟大家分享。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">- (NSInteger)secondsFromGMTForDate:(NSDate *)aDate;</div><div class="line">@property (readonly) NSInteger secondsFromGMT;</div></pre></td></tr></table></figure>
+<p>这两个API只差一个参数date,那么按照常规来讲，一个确定的NSTimeZone，它和GMT时区之间的时间间隔是固定的，为什么还有多一个参数date呢？这就是夏时制的问题啊，因为在某些日期的时候，由于正在实行夏时令，时区间隔会有所不一样。API诚不欺我啊。<br>这个在将0时区时间转化成当前时区的时候，推荐使用第一个API</p>
+<ul>
+<li>(NSInteger)secondsFromGMTForDate:(NSDate *)aDate</li>
+</ul>
+<p>譬如如下代码：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">NSDate* date = [NSDate date];//得到0时区日期</div><div class="line">NSTimeZone *zone = [NSTimeZone systemTimeZone];</div><div class="line">NSInteger interval = [zone secondsFromGMTForDate:date];</div><div class="line">NSDate *localeDate = [date  dateByAddingTimeInterval: interval];</div></pre></td></tr></table></figure>
+<h1 id="NSDateFormatter"><a href="#NSDateFormatter" class="headerlink" title="NSDateFormatter"></a>NSDateFormatter</h1><p>NSDateFormatter是一个很常用的类，用于格式化NSDate对象，支持本地化的信息。常规用法可能如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">NSDate *now = [NSDate date];</div><div class="line">NSDateFormatter *fmt = [[NSDateFormatter alloc] init];</div><div class="line">fmt.dateFormat = @&quot;yyyy-MM-dd HH:mm:ss&quot;;</div><div class="line">NSString *dateString = [fmt stringFromDate:now];</div><div class="line"></div><div class="line">NSLog(@&quot;%@&quot;, now);</div><div class="line">NSLog(@&quot;%@&quot;, dateString);</div><div class="line">打印输出：</div><div class="line">2016-11-20 08:34:38 +0000</div><div class="line"></div><div class="line">2016-11-20 16:34:38</div></pre></td></tr></table></figure>
+<p>上述代码是在东八区时区环境下运行。由此可见，NSDate默认是零时区时间，NSDateFormatter默认时区是系统时区，将NSDate格式化成当前系统时间。但是如果有需求需要将2016-11-20 08:34:38 +0000就格式化成原来的样子，即2016-11-20 08:34:38。怎么办呢？那就需要将NSDateFormatter的时区设置成GMT zone</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">NSDate *now = [NSDate date];</div><div class="line">NSDateFormatter *fmt = [[NSDateFormatter alloc] init];</div><div class="line">fmt.dateFormat = @&quot;yyyy-MM-dd HH:mm:ss&quot;;</div><div class="line">fmt.timeZone = [NSTimeZone timeZoneWithAbbreviation:@&quot;GMT&quot;];</div><div class="line">NSString *dateString = [fmt stringFromDate:now];</div><div class="line"></div><div class="line">NSLog(@&quot;%@&quot;, now);</div><div class="line">NSLog(@&quot;%@&quot;, dateString);</div><div class="line">打印输出：</div><div class="line">2016-11-20 08:34:38 +0000</div><div class="line"></div><div class="line">2016-11-20 08:34:38</div></pre></td></tr></table></figure>
+<p>由于NSDateFormatter初始化的非常耗时，如果频繁初始化的话，有时会造成程序卡顿。所以，如果程序日期转化频繁的话，建议将NSDateFormatter做成单例。比如如下这样：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line">+ (NSDateFormatter *)sharedSystemZoneDateFormatter </div><div class="line">&#123;</div><div class="line">    static NSDateFormatter *sharedDateFormatter = nil;</div><div class="line">    </div><div class="line">    static dispatch_once_t onceToken;</div><div class="line">    dispatch_once(&amp;onceToken, ^&#123;</div><div class="line">        sharedDateFormatter = [[NSDateFormatter alloc] init];</div><div class="line">        [sharedDateFormatter setTimeZone:[NSTimeZone systemTimeZone]];</div><div class="line"></div><div class="line">    &#125;);</div><div class="line">    return sharedDateFormatter;</div><div class="line">&#125;</div><div class="line">//GMT时区DateFormatter</div><div class="line">+ (NSDateFormatter *)sharedGmtZoneDateFormatter</div><div class="line">&#123;</div><div class="line">    static NSDateFormatter *sharedGmtDateFormatter = nil;</div><div class="line">    </div><div class="line">    static dispatch_once_t onceToken;</div><div class="line">    dispatch_once(&amp;onceToken, ^&#123;</div><div class="line">        sharedGmtDateFormatter = [[NSDateFormatter alloc] init];</div><div class="line">        [sharedGmtDateFormatter setTimeZone:[NSTimeZone timeZoneWithAbbreviation:@&quot;GMT&quot;]];</div><div class="line">    &#125;);</div><div class="line">    return sharedGmtDateFormatter;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>一个基于系统时区，一个基于GMT时区。</p>
+<h1 id="最后"><a href="#最后" class="headerlink" title="最后"></a>最后</h1><p>NSDate和NSDateFormatter，在程序开发中会经常用到，系统的梳理一下，对于日后的开发工作，会是一个正向的促进作用。</p>
+<p>关于NSDate的常用功能，我做了一个Category，会上传到Github上。稍后会在此贴出链接。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/iOS/" rel="tag">#iOS</a>
+          
+            <a href="/tags/Objective-C/" rel="tag">#Objective-C</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/11/02/FBKVOController源码分析/" rel="next" title="FBKVOController源码分析">
+                <i class="fa fa-chevron-left"></i> FBKVOController源码分析
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2016/11/20/你所不知道的NSDate和NSDateFormatter/"
+           data-title="你所不知道的NSDate和NSDateFormatter" data-url="http://yoursite.com/2016/11/20/你所不知道的NSDate和NSDateFormatter/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.jpeg"
+               alt="yitu" />
+          <p class="site-author-name" itemprop="name">yitu</p>
+          <p class="site-description motion-element" itemprop="description">software R&D</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">7</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">5</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/yituwangpeng" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#背景"><span class="nav-number">1.</span> <span class="nav-text">背景</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#行程助手上遇到的日期Bug"><span class="nav-number">2.</span> <span class="nav-text">行程助手上遇到的日期Bug</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#行程助手是什么"><span class="nav-number">2.1.</span> <span class="nav-text">行程助手是什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#行程助手的日期处理策略"><span class="nav-number">2.2.</span> <span class="nav-text">行程助手的日期处理策略</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#出现的bug"><span class="nav-number">2.3.</span> <span class="nav-text">出现的bug</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Bug分析"><span class="nav-number">3.</span> <span class="nav-text">Bug分析</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#首先尝试bug复现"><span class="nav-number">3.1.</span> <span class="nav-text">首先尝试bug复现</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#梳理项目中日期显示流程"><span class="nav-number">3.2.</span> <span class="nav-text">梳理项目中日期显示流程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#流程中发现问题"><span class="nav-number">3.3.</span> <span class="nav-text">流程中发现问题</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#夏时制问题"><span class="nav-number">3.3.1.</span> <span class="nav-text">夏时制问题</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#答案浮出水面"><span class="nav-number">3.4.</span> <span class="nav-text">答案浮出水面</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#如何解决"><span class="nav-number">3.5.</span> <span class="nav-text">如何解决</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#夏时制问题总结"><span class="nav-number">3.6.</span> <span class="nav-text">夏时制问题总结</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#NSDateFormatter"><span class="nav-number">4.</span> <span class="nav-text">NSDateFormatter</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#最后"><span class="nav-number">5.</span> <span class="nav-text">最后</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">yitu</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"yitupeng"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
