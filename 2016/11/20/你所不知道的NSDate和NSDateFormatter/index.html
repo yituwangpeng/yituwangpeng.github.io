@@ -68,7 +68,7 @@
 <link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="iOS,Objective-C," />
+  <meta name="keywords" content="Objective-C,iOS," />
 
 
 
@@ -92,7 +92,7 @@
 <meta property="og:url" content="http://yoursite.com/2016/11/20/你所不知道的NSDate和NSDateFormatter/index.html">
 <meta property="og:site_name" content="yitu's blog">
 <meta property="og:description" content="背景关于NSDate和NSDateFormatter两个类相信大家也都用过，基本功能或许也都会用。但是我今天要讲一些细节问题，一些不遇到过就不会注意和发现的点。早在2013年做智能手表的时候，当时就对这两个类有过很重的使用。因为数据要标记生成数据的时间，数据同步到手机上之后，APP上显示的时间也要跟数据产生时间保持一致，这个保持一致就产生了一个时区的问题。假设用户在西八区带着智能手表产生了一些数据">
-<meta property="og:updated_time" content="2016-11-20T09:37:52.000Z">
+<meta property="og:updated_time" content="2016-11-21T10:12:48.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="你所不知道的NSDate和NSDateFormatter">
 <meta name="twitter:description" content="背景关于NSDate和NSDateFormatter两个类相信大家也都用过，基本功能或许也都会用。但是我今天要讲一些细节问题，一些不遇到过就不会注意和发现的点。早在2013年做智能手表的时候，当时就对这两个类有过很重的使用。因为数据要标记生成数据的时间，数据同步到手机上之后，APP上显示的时间也要跟数据产生时间保持一致，这个保持一致就产生了一个时区的问题。假设用户在西八区带着智能手表产生了一些数据">
@@ -365,11 +365,12 @@
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">NSDate *now = [NSDate date];</div><div class="line">NSDateFormatter *fmt = [[NSDateFormatter alloc] init];</div><div class="line">fmt.dateFormat = @&quot;yyyy-MM-dd HH:mm:ss&quot;;</div><div class="line">NSString *dateString = [fmt stringFromDate:now];</div><div class="line"></div><div class="line">NSLog(@&quot;%@&quot;, now);</div><div class="line">NSLog(@&quot;%@&quot;, dateString);</div><div class="line">打印输出：</div><div class="line">2016-11-20 08:34:38 +0000</div><div class="line"></div><div class="line">2016-11-20 16:34:38</div></pre></td></tr></table></figure>
 <p>上述代码是在东八区时区环境下运行。由此可见，NSDate默认是零时区时间，NSDateFormatter默认时区是系统时区，将NSDate格式化成当前系统时间。但是如果有需求需要将2016-11-20 08:34:38 +0000就格式化成原来的样子，即2016-11-20 08:34:38。怎么办呢？那就需要将NSDateFormatter的时区设置成GMT zone</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">NSDate *now = [NSDate date];</div><div class="line">NSDateFormatter *fmt = [[NSDateFormatter alloc] init];</div><div class="line">fmt.dateFormat = @&quot;yyyy-MM-dd HH:mm:ss&quot;;</div><div class="line">fmt.timeZone = [NSTimeZone timeZoneWithAbbreviation:@&quot;GMT&quot;];</div><div class="line">NSString *dateString = [fmt stringFromDate:now];</div><div class="line"></div><div class="line">NSLog(@&quot;%@&quot;, now);</div><div class="line">NSLog(@&quot;%@&quot;, dateString);</div><div class="line">打印输出：</div><div class="line">2016-11-20 08:34:38 +0000</div><div class="line"></div><div class="line">2016-11-20 08:34:38</div></pre></td></tr></table></figure>
-<p>由于NSDateFormatter初始化的非常耗时，如果频繁初始化的话，有时会造成程序卡顿。所以，如果程序日期转化频繁的话，建议将NSDateFormatter做成单例。比如如下这样：</p>
+<p>由于NSDateFormatter初始化的非常耗时，如果频繁初始化的话，有时会造成程序卡顿。所以，如果程序日期转化频繁的话，建议将NSDateFormatter做成单例。比如下面这样：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line">+ (NSDateFormatter *)sharedSystemZoneDateFormatter </div><div class="line">&#123;</div><div class="line">    static NSDateFormatter *sharedDateFormatter = nil;</div><div class="line">    </div><div class="line">    static dispatch_once_t onceToken;</div><div class="line">    dispatch_once(&amp;onceToken, ^&#123;</div><div class="line">        sharedDateFormatter = [[NSDateFormatter alloc] init];</div><div class="line">        [sharedDateFormatter setTimeZone:[NSTimeZone systemTimeZone]];</div><div class="line"></div><div class="line">    &#125;);</div><div class="line">    return sharedDateFormatter;</div><div class="line">&#125;</div><div class="line">//GMT时区DateFormatter</div><div class="line">+ (NSDateFormatter *)sharedGmtZoneDateFormatter</div><div class="line">&#123;</div><div class="line">    static NSDateFormatter *sharedGmtDateFormatter = nil;</div><div class="line">    </div><div class="line">    static dispatch_once_t onceToken;</div><div class="line">    dispatch_once(&amp;onceToken, ^&#123;</div><div class="line">        sharedGmtDateFormatter = [[NSDateFormatter alloc] init];</div><div class="line">        [sharedGmtDateFormatter setTimeZone:[NSTimeZone timeZoneWithAbbreviation:@&quot;GMT&quot;]];</div><div class="line">    &#125;);</div><div class="line">    return sharedGmtDateFormatter;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>一个基于系统时区，一个基于GMT时区。</p>
 <h1 id="最后"><a href="#最后" class="headerlink" title="最后"></a>最后</h1><p>NSDate和NSDateFormatter，在程序开发中会经常用到，系统的梳理一下，对于日后的开发工作，会是一个正向的促进作用。</p>
 <p>关于NSDate的常用功能，我做了一个Category，会上传到Github上。稍后会在此贴出链接。</p>
+<p><strong>原创文章，版权所有，转载请注明出处</strong></p>
 
       
     </div>
@@ -392,9 +393,9 @@
       
         <div class="post-tags">
           
-            <a href="/tags/iOS/" rel="tag">#iOS</a>
-          
             <a href="/tags/Objective-C/" rel="tag">#Objective-C</a>
+          
+            <a href="/tags/iOS/" rel="tag">#iOS</a>
           
         </div>
       
