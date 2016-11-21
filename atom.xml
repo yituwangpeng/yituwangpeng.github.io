@@ -119,9 +119,9 @@
     </summary>
     
     
-      <category term="Objective-C" scheme="http://yoursite.com/tags/Objective-C/"/>
-    
       <category term="iOS" scheme="http://yoursite.com/tags/iOS/"/>
+    
+      <category term="Objective-C" scheme="http://yoursite.com/tags/Objective-C/"/>
     
   </entry>
   
@@ -225,9 +225,9 @@
     </summary>
     
     
-      <category term="Objective-C" scheme="http://yoursite.com/tags/Objective-C/"/>
-    
       <category term="iOS" scheme="http://yoursite.com/tags/iOS/"/>
+    
+      <category term="Objective-C" scheme="http://yoursite.com/tags/Objective-C/"/>
     
   </entry>
   
@@ -357,9 +357,9 @@
     </summary>
     
     
-      <category term="iOS" scheme="http://yoursite.com/tags/iOS/"/>
-    
       <category term="Swift" scheme="http://yoursite.com/tags/Swift/"/>
+    
+      <category term="iOS" scheme="http://yoursite.com/tags/iOS/"/>
     
   </entry>
   
